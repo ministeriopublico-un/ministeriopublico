@@ -1,13 +1,15 @@
 const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, ApplicationCommandOptionType, AttachmentBuilder } = require('discord.js');
 require('dotenv').config();
-const QRCode = require('qrcode'); // Importar la librería QR Code
+const { createCanvas, loadImage } = require('canvas'); // Importar Canvas
+// const QRCode = require('qrcode'); // Ya no es necesario si usamos Canvas
 
 // URLs de Imágenes
 const HEADER_IMAGE_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448518866035544273/ministerio_publico_venezuela.png?ex=693b8dd1&is=693a3c51&hm=e20e1ae17a49040fa39067e08869a769883acc67abd69dea54f97141547eec96&=&format=webp&quality=lossless&width=1172&height=313';
 const THUMBNAIL_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448517274800754728/MINISTERIO_PUBLICO_DE_VENEZUELA_LOGO.png?ex=693b8c56&is=693a3ad6&hm=83af40c13feafd3bc91a944be73cab55a235379089fd165743a596cc33dfeb4a&=&format=webp&quality=lossless&width=675&height=675';
 
-// COLOR HEX UNIFICADO DE LA FISCALÍA
+// COLOR HEX UNIFICADO DE LA FISCALÍA (para embeds y diseño de tarjeta)
 const MP_COLOR = 0x001F4E; 
+const MP_COLOR_HEX = '#001F4E';
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages] });
 
@@ -15,18 +17,31 @@ client.on('ready', () => {
 	console.log(`Bot conectado como ${client.user.tag}`);
 });
 
+// Función auxiliar para dibujar texto y ajustar el tamaño
+const applyText = (canvas, text) => {
+	const context = canvas.getContext('2d');
+	let fontSize = 40;
+
+	do {
+		context.font = `bold ${fontSize -= 2}px Sans-Serif`;
+	} while (context.measureText(text).width > 400);
+
+	return context.font;
+};
+
 client.on('interactionCreate', async interaction => {
 	if (!interaction.isChatInputCommand()) return;
 
 	const opts = interaction.options;
 
-    // ... (Lógica de comandos /registro, /personal-accion, /anuncio, /personal-moderacion y /anuncio-oficial — SIN CAMBIOS) ...
+    // --- (Lógica de comandos /registro, /personal-accion, /anuncio, /personal-moderacion y /anuncio-oficial — SIN CAMBIOS) ---
 
-    // --- LÓGICA DEL COMANDO /registro ---
+    // --- LÓGICA DEL COMANDO /registro --- (Mantengo el código anterior)
 	if (interaction.commandName === 'registro') {
 		const embed = new EmbedBuilder()
 			.setColor(MP_COLOR) 
 			.setTitle('📜 REGISTRO DE APERTURA DE INVESTIGACIÓN FORMAL')
+            // ... (resto del embed de registro)
 			.setDescription(
 				"El proceso judicial requiere la observancia rigurosa del **debido proceso** y de la garantía de la **celeridad y buena marcha de la administración de justicia**."
 			)
@@ -45,7 +60,7 @@ client.on('interactionCreate', async interaction => {
 		await interaction.reply({ embeds: [embed] });
 	}
 
-    // --- LÓGICA DEL COMANDO /personal-accion ---
+    // --- LÓGICA DEL COMANDO /personal-accion --- (Mantengo el código anterior)
     if (interaction.commandName === 'personal-accion') {
         // (Lógica de acción de personal) ...
         const tipoAccion = opts.getString('tipo-de-accion');
@@ -89,7 +104,7 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [embedPersonal] });
     }
 
-    // --- LÓGICA DEL COMANDO /anuncio (Generador de Embed) ---
+    // --- LÓGICA DEL COMANDO /anuncio (Generador de Embed) --- (Mantengo el código anterior)
     if (interaction.commandName === 'anuncio') {
         const titulo = opts.getString('titulo');
         const descripcion = opts.getString('descripcion');
@@ -114,9 +129,9 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [anuncioEmbed] });
     }
 
-    // --- LÓGICA DEL COMANDO /personal-moderacion ---
+    // --- LÓGICA DEL COMANDO /personal-moderacion --- (Mantengo el código anterior)
     if (interaction.commandName === 'personal-moderacion') {
-        
+        // (Lógica de moderación) ...
         if (!interaction.member.permissions.has(PermissionsBitField.Flags.KickMembers)) {
             return interaction.reply({ content: '⛔ **Acceso Denegado.** No posee la potestad legal para ejecutar comandos de moderación.', ephemeral: true });
         }
@@ -197,7 +212,7 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // --- LÓGICA DEL COMANDO /anuncio-oficial ---
+    // --- LÓGICA DEL COMANDO /anuncio-oficial --- (Mantengo el código anterior)
     if (interaction.commandName === 'anuncio-oficial') {
         const mensaje = opts.getString('mensaje');
         const tituloCorto = opts.getString('titulo-corto');
@@ -213,57 +228,114 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [embedOficial] });
     }
 
-    // --- LÓGICA DEL COMANDO /ficha-oficial (MODIFICADO CON QR) ---
+    // --- LÓGICA DEL COMANDO /ficha-oficial (MODIFICADO CON CANVAS) ---
     if (interaction.commandName === 'ficha-oficial') {
         
-        await interaction.deferReply(); // Deferir la respuesta ya que la generación de QR toma tiempo.
+        await interaction.deferReply(); 
 
         const funcionario = opts.getUser('funcionario');
         const cargo = opts.getString('cargo-actual');
         const registro = opts.getString('registro-nacional');
         const autoridad = opts.getString('autoridad-emite');
-        const filename = `id_qr_${funcionario.id}.png`;
+        const filename = `id_ficha_${funcionario.id}.png`;
 
-        // 1. Crear el String de datos para el QR
-        const qrData = 
-            `REGISTRO OFICIAL - FISCALIA\n` +
-            `Funcionario: ${funcionario.tag}\n` +
-            `Cargo: ${cargo}\n` +
-            `N° Reg: ${registro}\n` +
-            `Emitido: ${new Date().toLocaleDateString('es-ES')}`;
+        // 1. Configuración del Canvas (Tarjeta de 600x300)
+        const canvas = createCanvas(600, 300);
+        const context = canvas.getContext('2d');
 
-        // 2. Generar el QR como Buffer PNG
-        let qrBuffer;
-        try {
-            qrBuffer = await QRCode.toBuffer(qrData, { 
-                type: 'png', 
-                errorCorrectionLevel: 'H', 
-                color: { dark: '#001F4E', light: '#FFFFFF' } // Colores de Fiscalía
-            });
-        } catch (error) {
-            console.error("Error al generar QR:", error);
-            return interaction.editReply({ content: '❌ Error interno al generar el código QR.', ephemeral: true });
-        }
+        // 2. Dibujar fondo de Fiscalía (Azul Oscuro)
+        context.fillStyle = MP_COLOR_HEX;
+        context.fillRect(0, 0, 600, 300);
+
+        // 3. Dibujar Banner Superior (para la Foto)
+        context.fillStyle = '#1e3c72'; // Un tono ligeramente más claro
+        context.fillRect(0, 0, 600, 100);
         
-        // 3. Crear el Attachment de Discord
-        const attachment = new AttachmentBuilder(qrBuffer, { name: filename });
+        // 4. Dibujar Foto de Perfil (Avatar del Funcionario)
+        try {
+            const avatar = await loadImage(funcionario.displayAvatarURL({ extension: 'png', size: 128 }));
+            
+            // Dibujar el marco de la foto (círculo)
+            context.beginPath();
+            context.arc(70, 50, 40, 0, Math.PI * 2, true);
+            context.fillStyle = '#FFFFFF';
+            context.fill();
+            context.closePath();
+            
+            // Recortar el avatar en círculo
+            context.save();
+            context.beginPath();
+            context.arc(70, 50, 38, 0, Math.PI * 2, true);
+            context.closePath();
+            context.clip();
+            context.drawImage(avatar, 32, 12, 76, 76);
+            context.restore();
 
-        // 4. Crear el Embed
+        } catch (e) {
+            console.error('Error cargando avatar:', e);
+        }
+
+        // 5. Escribir Título Principal
+        context.font = 'bold 30px Sans-Serif';
+        context.fillStyle = '#FFFFFF';
+        context.fillText('FISCALÍA GENERAL DE LA REPÚBLICA', 120, 60);
+
+        // 6. Escribir Datos del Funcionario
+        context.fillStyle = '#FFFFFF';
+        
+        // Nombre de Usuario (Tag)
+        context.font = applyText(canvas, funcionario.tag);
+        context.fillText(`${funcionario.tag}`, 120, 95);
+
+        // Línea Separadora
+        context.strokeStyle = '#FFFFFF';
+        context.lineWidth = 1;
+        context.beginPath();
+        context.moveTo(20, 110);
+        context.lineTo(580, 110);
+        context.stroke();
+
+        // Cargo
+        context.font = 'bold 24px Sans-Serif';
+        context.fillStyle = '#FFFFFF';
+        context.fillText('CARGO:', 20, 150);
+        context.font = '24px Sans-Serif';
+        context.fillText(cargo, 200, 150);
+
+        // Registro
+        context.font = 'bold 24px Sans-Serif';
+        context.fillText('REGISTRO N°:', 20, 190);
+        context.font = '24px Sans-Serif';
+        context.fillText(registro, 200, 190);
+        
+        // Autoridad
+        context.font = 'bold 24px Sans-Serif';
+        context.fillText('AUTORIDAD:', 20, 230);
+        context.font = '24px Sans-Serif';
+        context.fillText(autoridad, 200, 230);
+
+        // Footer (fecha)
+        context.font = '16px Sans-Serif';
+        context.fillStyle = '#CCCCCC';
+        context.fillText(`Emitida: ${new Date().toLocaleDateString('es-ES')}`, 400, 280);
+
+
+        // 7. Generar Buffer PNG
+        const buffer = canvas.toBuffer('image/png');
+        
+        // 8. Crear el Attachment de Discord
+        const attachment = new AttachmentBuilder(buffer, { name: filename });
+
+        // 9. Crear el Embed (solo para acompañar la imagen)
         const fichaEmbed = new EmbedBuilder()
             .setColor(MP_COLOR)
-            .setTitle(`📄 FICHA DE REGISTRO NACIONAL DE PERSONAL`)
-            .setDescription(`Documento de certificación emitido para el registro y validación de funciones públicas. **Escanee el QR para verificar datos.**`)
-            .setThumbnail(funcionario.displayAvatarURL({ dynamic: true }))
-            .setImage(`attachment://${filename}`) // Usar el nombre del archivo adjunto
-            .addFields(
-                { name: 'I. IDENTIFICACIÓN', value: `${funcionario}`, inline: true },
-                { name: 'II. CARGO REGISTRADO', value: `**${cargo}**`, inline: true },
-                { name: 'III. REGISTRO N°', value: `\`${registro}\``, inline: true },
-            )
-            .setFooter({ text: `Certificado por: ${autoridad} | Dirección de RR.HH.` })
+            .setTitle(`✅ FICHA DE IDENTIFICACIÓN OFICIAL GENERADA`)
+            .setDescription(`Se ha emitido la Tarjeta de Identificación para el funcionario **${funcionario.tag}**.\n\nGuárdela como prueba de su registro en la Dirección de Recursos Humanos.`)
+            .setImage(`attachment://${filename}`)
+            .setFooter({ text: `Autoridad Certificadora: ${autoridad}` })
             .setTimestamp();
 
-        // 5. Enviar el Embed y el Attachment
+        // 10. Enviar el Embed y el Attachment
         await interaction.editReply({ embeds: [fichaEmbed], files: [attachment] });
     }
 });
