@@ -1,13 +1,12 @@
 const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, ApplicationCommandOptionType, AttachmentBuilder } = require('discord.js');
 require('dotenv').config();
 const { createCanvas, loadImage } = require('canvas'); // Importar Canvas
-// const QRCode = require('qrcode'); // Ya no es necesario si usamos Canvas
 
 // URLs de Imágenes
 const HEADER_IMAGE_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448518866035544273/ministerio_publico_venezuela.png?ex=693b8dd1&is=693a3c51&hm=e20e1ae17a49040fa39067e08869a769883acc67abd69dea54f97141547eec96&=&format=webp&quality=lossless&width=1172&height=313';
 const THUMBNAIL_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448517274800754728/MINISTERIO_PUBLICO_DE_VENEZUELA_LOGO.png?ex=693b8c56&is=693a3ad6&hm=83af40c13feafd3bc91a944be73cab55a235379089fd165743a596cc33dfeb4a&=&format=webp&quality=lossless&width=675&height=675';
 
-// COLOR HEX UNIFICADO DE LA FISCALÍA (para embeds y diseño de tarjeta)
+// COLOR HEX UNIFICADO DE LA FISCALÍA
 const MP_COLOR = 0x001F4E; 
 const MP_COLOR_HEX = '#001F4E';
 
@@ -17,31 +16,16 @@ client.on('ready', () => {
 	console.log(`Bot conectado como ${client.user.tag}`);
 });
 
-// Función auxiliar para dibujar texto y ajustar el tamaño
-const applyText = (canvas, text) => {
-	const context = canvas.getContext('2d');
-	let fontSize = 40;
-
-	do {
-		context.font = `bold ${fontSize -= 2}px Sans-Serif`;
-	} while (context.measureText(text).width > 400);
-
-	return context.font;
-};
-
 client.on('interactionCreate', async interaction => {
 	if (!interaction.isChatInputCommand()) return;
 
 	const opts = interaction.options;
 
-    // --- (Lógica de comandos /registro, /personal-accion, /anuncio, /personal-moderacion y /anuncio-oficial — SIN CAMBIOS) ---
-
-    // --- LÓGICA DEL COMANDO /registro --- (Mantengo el código anterior)
+    // --- LÓGICA DEL COMANDO /registro ---
 	if (interaction.commandName === 'registro') {
 		const embed = new EmbedBuilder()
 			.setColor(MP_COLOR) 
 			.setTitle('📜 REGISTRO DE APERTURA DE INVESTIGACIÓN FORMAL')
-            // ... (resto del embed de registro)
 			.setDescription(
 				"El proceso judicial requiere la observancia rigurosa del **debido proceso** y de la garantía de la **celeridad y buena marcha de la administración de justicia**."
 			)
@@ -60,9 +44,8 @@ client.on('interactionCreate', async interaction => {
 		await interaction.reply({ embeds: [embed] });
 	}
 
-    // --- LÓGICA DEL COMANDO /personal-accion --- (Mantengo el código anterior)
+    // --- LÓGICA DEL COMANDO /personal-accion ---
     if (interaction.commandName === 'personal-accion') {
-        // (Lógica de acción de personal) ...
         const tipoAccion = opts.getString('tipo-de-accion');
         const funcionario = opts.getUser('funcionario-afectado');
         const rangoAnterior = opts.getString('rango-o-estado-anterior');
@@ -83,7 +66,7 @@ client.on('interactionCreate', async interaction => {
         }
 
         const embedPersonal = new EmbedBuilder()
-            .setColor(MP_COLOR) 
+            .setColor(MP_COLOR)
             .setTitle(`🛡️ ${titulo} - FISCALÍA GENERAL DE LA REPÚBLICA`)
             .setDescription(`Se notifica el movimiento oficial de personal emitido por la máxima autoridad competente en la Dirección de Recursos Humanos.`)
             .setThumbnail(THUMBNAIL_URL)
@@ -104,7 +87,7 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [embedPersonal] });
     }
 
-    // --- LÓGICA DEL COMANDO /anuncio (Generador de Embed) --- (Mantengo el código anterior)
+    // --- LÓGICA DEL COMANDO /anuncio (Generador de Embed) ---
     if (interaction.commandName === 'anuncio') {
         const titulo = opts.getString('titulo');
         const descripcion = opts.getString('descripcion');
@@ -129,9 +112,9 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [anuncioEmbed] });
     }
 
-    // --- LÓGICA DEL COMANDO /personal-moderacion --- (Mantengo el código anterior)
+    // --- LÓGICA DEL COMANDO /personal-moderacion ---
     if (interaction.commandName === 'personal-moderacion') {
-        // (Lógica de moderación) ...
+        
         if (!interaction.member.permissions.has(PermissionsBitField.Flags.KickMembers)) {
             return interaction.reply({ content: '⛔ **Acceso Denegado.** No posee la potestad legal para ejecutar comandos de moderación.', ephemeral: true });
         }
@@ -212,7 +195,7 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // --- LÓGICA DEL COMANDO /anuncio-oficial --- (Mantengo el código anterior)
+    // --- LÓGICA DEL COMANDO /anuncio-oficial ---
     if (interaction.commandName === 'anuncio-oficial') {
         const mensaje = opts.getString('mensaje');
         const tituloCorto = opts.getString('titulo-corto');
@@ -228,7 +211,7 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [embedOficial] });
     }
 
-    // --- LÓGICA DEL COMANDO /ficha-oficial (MODIFICADO CON CANVAS) ---
+    // --- LÓGICA DEL COMANDO /ficha-oficial (CON CANVAS MEJORADO) ---
     if (interaction.commandName === 'ficha-oficial') {
         
         await interaction.deferReply(); 
@@ -247,7 +230,7 @@ client.on('interactionCreate', async interaction => {
         context.fillStyle = MP_COLOR_HEX;
         context.fillRect(0, 0, 600, 300);
 
-        // 3. Dibujar Banner Superior (para la Foto)
+        // 3. Dibujar Banner Superior (para el encabezado y logo)
         context.fillStyle = '#1e3c72'; // Un tono ligeramente más claro
         context.fillRect(0, 0, 600, 100);
         
@@ -275,19 +258,17 @@ client.on('interactionCreate', async interaction => {
             console.error('Error cargando avatar:', e);
         }
 
-        // 5. Escribir Título Principal
-        context.font = 'bold 30px Sans-Serif';
+        // 5. Escribir Título Principal (Mejor Posicionado)
+        context.font = 'bold 28px Sans-Serif'; 
         context.fillStyle = '#FFFFFF';
-        context.fillText('FISCALÍA GENERAL DE LA REPÚBLICA', 120, 60);
+        context.fillText('FISCALÍA GENERAL DE LA REPÚBLICA', 120, 45); // Y=45 (más arriba)
 
-        // 6. Escribir Datos del Funcionario
+        // 6. Escribir Nombre de Usuario (Tag) (Mejor Posicionado)
+        context.font = '22px Sans-Serif'; 
         context.fillStyle = '#FFFFFF';
-        
-        // Nombre de Usuario (Tag)
-        context.font = applyText(canvas, funcionario.tag);
-        context.fillText(`${funcionario.tag}`, 120, 95);
+        context.fillText(`${funcionario.tag}`, 120, 80); // Y=80 (separado del título)
 
-        // Línea Separadora
+        // 7. Línea Separadora
         context.strokeStyle = '#FFFFFF';
         context.lineWidth = 1;
         context.beginPath();
@@ -295,38 +276,40 @@ client.on('interactionCreate', async interaction => {
         context.lineTo(580, 110);
         context.stroke();
 
-        // Cargo
-        context.font = 'bold 24px Sans-Serif';
+        // 8. Escribir Datos del Funcionario (Títulos y Datos, tamaño reducido a 22px)
         context.fillStyle = '#FFFFFF';
+        
+        // Cargo
+        context.font = 'bold 22px Sans-Serif'; 
         context.fillText('CARGO:', 20, 150);
-        context.font = '24px Sans-Serif';
+        context.font = '22px Sans-Serif';
         context.fillText(cargo, 200, 150);
 
         // Registro
-        context.font = 'bold 24px Sans-Serif';
+        context.font = 'bold 22px Sans-Serif';
         context.fillText('REGISTRO N°:', 20, 190);
-        context.font = '24px Sans-Serif';
+        context.font = '22px Sans-Serif';
         context.fillText(registro, 200, 190);
         
         // Autoridad
-        context.font = 'bold 24px Sans-Serif';
+        context.font = 'bold 22px Sans-Serif';
         context.fillText('AUTORIDAD:', 20, 230);
-        context.font = '24px Sans-Serif';
+        context.font = '22px Sans-Serif';
         context.fillText(autoridad, 200, 230);
 
-        // Footer (fecha)
+        // 9. Footer (fecha)
         context.font = '16px Sans-Serif';
         context.fillStyle = '#CCCCCC';
         context.fillText(`Emitida: ${new Date().toLocaleDateString('es-ES')}`, 400, 280);
 
 
-        // 7. Generar Buffer PNG
+        // 10. Generar Buffer PNG
         const buffer = canvas.toBuffer('image/png');
         
-        // 8. Crear el Attachment de Discord
+        // 11. Crear el Attachment de Discord
         const attachment = new AttachmentBuilder(buffer, { name: filename });
 
-        // 9. Crear el Embed (solo para acompañar la imagen)
+        // 12. Crear el Embed (para acompañar la imagen)
         const fichaEmbed = new EmbedBuilder()
             .setColor(MP_COLOR)
             .setTitle(`✅ FICHA DE IDENTIFICACIÓN OFICIAL GENERADA`)
@@ -335,7 +318,7 @@ client.on('interactionCreate', async interaction => {
             .setFooter({ text: `Autoridad Certificadora: ${autoridad}` })
             .setTimestamp();
 
-        // 10. Enviar el Embed y el Attachment
+        // 13. Enviar el Embed y el Attachment
         await interaction.editReply({ embeds: [fichaEmbed], files: [attachment] });
     }
 });
