@@ -19,7 +19,7 @@ client.on('interactionCreate', async interaction => {
 
 		const embed = new EmbedBuilder()
 			.setColor(0x003366) // Azul Oscuro de Fiscalía
-			.setTitle('📜 REGISTRO DE APERTURA DE INVESTIGACIÓN FORMAL')
+			.setTitle(' REGISTRO DE APERTURA DE INVESTIGACIÓN FORMAL')
 			.setDescription(
 				"El proceso judicial requiere la observancia rigurosa del **debido proceso** y de la garantía de la **celeridad y buena marcha de la administración de justicia**."
 			)
