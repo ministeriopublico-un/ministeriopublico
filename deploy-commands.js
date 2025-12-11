@@ -1,8 +1,8 @@
 const { REST, Routes, ApplicationCommandOptionType } = require('discord.js');
 require('dotenv').config();
 
-// Se usa ApplicationCommandOptionType para referencia más clara
 const commands = [
+    // COMANDO 1: REGISTRO DE INVESTIGACIÓN
 	{
 		name: 'registro',
 		description: 'Registrar una investigación con datos completos',
@@ -20,7 +20,7 @@ const commands = [
 					{ name: 'Fiscalía Territorial', value: 'Fiscalia Territorial' },
 				],
 			},
-			{ name: 'fiscal-responsable', type: ApplicationCommandOptionType.User, description: 'Fiscal responsable (@usuario)', required: true }, // CAMBIO A USER
+			{ name: 'fiscal-responsable', type: ApplicationCommandOptionType.User, description: 'Fiscal responsable (@usuario)', required: true },
 			{ name: 'fecha-y-hora-de-la-apertura', type: ApplicationCommandOptionType.String, description: 'Fecha y hora de apertura', required: true },
 			{ name: 'fuente-de-la-denuncia', type: ApplicationCommandOptionType.String, description: 'Fuente de la denuncia (Ej. Ticket #XXXX)', required: true },
 			{
@@ -38,9 +38,9 @@ const commands = [
 			},
 			{ name: 'jurisdiccion-territorial', type: ApplicationCommandOptionType.String, description: 'Jurisdicción territorial', required: true },
 			
-            { name: 'datos-del-denunciante', type: ApplicationCommandOptionType.User, description: 'Datos del denunciante (@usuario)', required: true }, // CAMBIO A USER
-			{ name: 'datos-de-la-victima', type: ApplicationCommandOptionType.User, description: 'Datos de la víctima (@usuario)', required: true }, // CAMBIO A USER
-			{ name: 'datos-del-imputado-o-imputada', type: ApplicationCommandOptionType.User, description: 'Datos del imputado/a (@usuario)', required: true }, // CAMBIO A USER
+            { name: 'datos-del-denunciante', type: ApplicationCommandOptionType.User, description: 'Datos del denunciante (@usuario)', required: true },
+			{ name: 'datos-de-la-victima', type: ApplicationCommandOptionType.User, description: 'Datos de la víctima (@usuario)', required: true },
+			{ name: 'datos-del-imputado-o-imputada', type: ApplicationCommandOptionType.User, description: 'Datos del imputado/a (@usuario)', required: true },
 			
             { name: 'representacion-legal', type: ApplicationCommandOptionType.String, description: 'Representación legal (Abogado/Defensor Público)', required: true },
 			{ name: 'descripcion-circunstanciada', type: ApplicationCommandOptionType.String, description: 'Descripción circunstanciada del hecho', required: true },
@@ -65,7 +65,32 @@ const commands = [
 			{ name: 'acciones-para-la-proteccion-vict', type: ApplicationCommandOptionType.String, description: 'Acciones de protección a la víctima', required: true },
 			{ name: 'plazo-para-el-primer-informe', type: ApplicationCommandOptionType.String, description: 'Plazo para el primer informe', required: true }
 		]
-	}
+	},
+
+    // COMANDO 2: ACCIÓN DE PERSONAL Y DISCIPLINA
+    {
+        name: 'personal-accion',
+        description: 'Genera un anuncio de Promoción, Degradación, Sanción o Remoción de un Fiscal',
+        options: [
+            {
+                name: 'tipo-de-accion',
+                type: ApplicationCommandOptionType.String,
+                description: 'Seleccione la acción de personal a notificar',
+                required: true,
+                choices: [
+                    { name: 'PROMOCIÓN (Subida de rango)', value: 'PROMOCION' },
+                    { name: 'DEGRADACIÓN (Baja de rango)', value: 'DEGRADACION' },
+                    { name: 'MEDIDA DISCIPLINARIA (Sanción)', value: 'SANCION' },
+                    { name: 'REMOCIÓN (Expulsión)', value: 'REMOCION' },
+                ],
+            },
+            { name: 'funcionario-afectado', type: ApplicationCommandOptionType.User, description: 'El Fiscal o funcionario objeto de la acción', required: true },
+            { name: 'rango-o-estado-anterior', type: ApplicationCommandOptionType.String, description: 'Rango o estado actual del funcionario', required: true },
+            { name: 'rango-o-estado-nuevo', type: ApplicationCommandOptionType.String, description: 'Rango o estado después de la acción', required: true },
+            { name: 'motivo-oficial', type: ApplicationCommandOptionType.String, description: 'La justificación oficial de la acción', required: true },
+            { name: 'autoridad-firmante', type: ApplicationCommandOptionType.String, description: 'La autoridad que emite la orden (Ej. Fiscal General)', required: true },
+        ],
+    },
 ];
 
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
@@ -77,7 +102,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 			Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
 			{ body: commands }
 		);
-		console.log('Comando /registro registrado correctamente.');
+		console.log('Comandos /registro y /personal-accion registrados correctamente.');
 	} catch (error) {
 		console.error(error);
 	}
