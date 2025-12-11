@@ -6,8 +6,8 @@ const { createCanvas, loadImage } = require('canvas');
 const HEADER_IMAGE_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448518866035544273/ministerio_publico_venezuela.png?ex=693b8dd1&is=693a3c51&hm=e20e1ae17a49040fa39067e08869a769883acc67abd69dea54f97141547eec96&=&format=webp&quality=lossless&width=1172&height=313';
 const THUMBNAIL_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448517274800754728/MINISTERIO_PUBLICO_DE_VENEZUELA_LOGO.png?ex=693b8c56&is=693a3ad6&hm=83af40c13feafd3bc91a944be73cab55a235379089fd165743a596cc33dfeb4a&=&format=webp&quality=lossless&width=675&height=675';
 
-// URL DEL PATRÓN DE FONDO ELEGIDO (Utilizando una imagen estable de fondo abstracto azul)
-const BACKGROUND_PATTERN_URL = 'https://i.imgur.com/vHq057k.png'; 
+// URL DEL PATRÓN DE FONDO FINAL (Enlace directo a la imagen de curvas azules)
+const BACKGROUND_PATTERN_URL = 'https://i.imgur.com/KcK5ZDp.jpeg'; 
 
 // COLOR HEX UNIFICADO DE LA FISCALÍA
 const MP_COLOR = 0x001F4E; 
@@ -21,14 +21,13 @@ let loadedBackground = null;
 client.on('ready', async () => {
     console.log(`Bot conectado como ${client.user.tag}`);
     
-    // CARGAR EL FONDO UNA SOLA VEZ AL INICIO (Para evitar Timeouts en el comando)
+    // CARGAR EL FONDO UNA SOLA VEZ AL INICIO
     try {
         console.log('Cargando patrón de fondo...');
         loadedBackground = await loadImage(BACKGROUND_PATTERN_URL);
         console.log('Patrón de fondo cargado exitosamente.');
     } catch (e) {
-        console.error('ERROR CRÍTICO: No se pudo precargar la imagen de fondo. Las fichas saldrán con color sólido.', e);
-        // Si falla, loadedBackground será null, y el bot usará el color sólido.
+        console.error('ERROR CRÍTICO: No se pudo precargar la imagen de fondo. Usando color sólido de respaldo.', e);
     }
 });
 
@@ -227,10 +226,10 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [embedOficial] });
     }
 
-    // --- LÓGICA DEL COMANDO /ficha-oficial (CON IMAGEN DE FONDO Y FUENTE VERDANA) ---
+    // --- LÓGICA DEL COMANDO /ficha-oficial (FINALMENTE ESTABLE) ---
     if (interaction.commandName === 'ficha-oficial') {
         
-        // Ejecución inmediata del deferReply para evitar el timeout de 3 segundos
+        // 1. Ejecución inmediata del deferReply 
         await interaction.deferReply(); 
 
         const funcionario = opts.getUser('funcionario');
@@ -239,27 +238,25 @@ client.on('interactionCreate', async interaction => {
         const autoridad = opts.getString('autoridad-emite');
         const filename = `id_ficha_${funcionario.id}.png`;
 
-        // 1. Configuración del Canvas (Tarjeta de 600x300)
+        // 2. Configuración del Canvas
         const canvas = createCanvas(600, 300);
         const context = canvas.getContext('2d');
         
-        // --- DIBUJAR FONDO PRECargADO ---
+        // 3. DIBUJAR FONDO (Usa el fondo precargado o el color sólido de respaldo)
         if (loadedBackground) {
-            // Usa el fondo precargado (¡Rápido!)
             context.drawImage(loadedBackground, 0, 0, canvas.width, canvas.height);
         } else {
-            // Respaldo: color sólido
             context.fillStyle = MP_COLOR_HEX;
             context.fillRect(0, 0, 600, 300);
         }
         
-        // 3. Dibujar Banner Superior Sólido
+        // 4. Dibujar Banner Superior Sólido
         context.fillStyle = '#1e3c72'; 
         context.fillRect(0, 0, 600, 100);
         
-        // 4. Dibujar Foto de Perfil (Avatar del Funcionario)
+        // 5. Dibujar Foto de Perfil (Avatar del Funcionario)
         try {
-            // Cargar avatar (Este es el único paso de red restante)
+            // Cargar avatar
             const avatar = await loadImage(funcionario.displayAvatarURL({ extension: 'png', size: 128 }));
             
             // Dibujar el marco de la foto (círculo)
@@ -282,17 +279,17 @@ client.on('interactionCreate', async interaction => {
             console.error('Error cargando avatar:', e);
         }
 
-        // 5. Escribir Título Principal (Verdana)
+        // 6. Escribir Título Principal (Verdana)
         context.font = 'bold 28px Verdana'; 
         context.fillStyle = '#FFFFFF';
-        context.fillText('FISCALÍA GENERAL', 120, 45); 
+        context.fillText('FISCALÍA GENERAL DE LA REPÚBLICA', 120, 45); 
 
-        // 6. Escribir Nombre de Usuario (Tag) (Verdana)
+        // 7. Escribir Nombre de Usuario (Tag) (Verdana)
         context.font = '22px Verdana'; 
         context.fillStyle = '#FFFFFF';
         context.fillText(`${funcionario.tag}`, 120, 80); 
 
-        // 7. Línea Separadora
+        // 8. Línea Separadora y Datos
         context.strokeStyle = '#FFFFFF';
         context.lineWidth = 1;
         context.beginPath();
@@ -300,7 +297,6 @@ client.on('interactionCreate', async interaction => {
         context.lineTo(580, 110);
         context.stroke();
 
-        // 8. Escribir Datos del Funcionario (Títulos y Datos, tamaño 22px, Verdana)
         context.fillStyle = '#FFFFFF';
         
         // Cargo
@@ -336,10 +332,9 @@ client.on('interactionCreate', async interaction => {
              return interaction.editReply({ content: '❌ Error crítico: Falló la generación del archivo PNG.', ephemeral: true });
         }
         
-        // 11. Crear el Attachment de Discord
+        // 11. Crear el Attachment de Discord y el Embed
         const attachment = new AttachmentBuilder(buffer, { name: filename });
 
-        // 12. Crear el Embed (para acompañar la imagen)
         const fichaEmbed = new EmbedBuilder()
             .setColor(MP_COLOR)
             .setTitle(`✅ FICHA DE IDENTIFICACIÓN OFICIAL GENERADA`)
@@ -348,7 +343,7 @@ client.on('interactionCreate', async interaction => {
             .setFooter({ text: `Autoridad Certificadora: ${autoridad}` })
             .setTimestamp();
 
-        // 13. Enviar el Embed y el Attachment
+        // 12. Enviar la respuesta diferida
         await interaction.editReply({ embeds: [fichaEmbed], files: [attachment] });
     }
 });
