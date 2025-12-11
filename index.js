@@ -3,18 +3,19 @@ require('dotenv').config();
 const { createCanvas, loadImage } = require('canvas');
 
 // --- CONSTANTES GLOBALES DE IMAGEN Y COLOR ---
+// (URLs de imágenes fijas para los Embeds)
 const HEADER_IMAGE_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448518866035544273/ministerio_publico_venezuela.png?ex=693b8dd1&is=693a3c51&hm=e20e1ae17a49040fa39067e08869a769883acc67abd69dea54f97141547eec96&=&format=webp&quality=lossless&width=1172&height=313';
 const THUMBNAIL_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448517274800754728/MINISTERIO_PUBLICO_DE_VENEZUELA_LOGO.png?ex=693b8c56&is=693a3ad6&hm=83af40c13feafd3bc91a944be73cab55a235379089fd165743a596cc33dfeb4a&=&format=webp&quality=lossless&width=675&height=675';
 
 // Colores de la Fiscalía (MP)
 const MP_COLOR = 0x001F4E; 
 const MP_COLOR_HEX = '#001F4E';
-const LIGHT_MP_COLOR_HEX = '#003366'; // Azul más claro para la zona principal
-const DARK_BANNER_COLOR_HEX = '#1e3c72'; // Color del banner superior (más oscuro)
+const LIGHT_MP_COLOR_HEX = '#003366'; 
+const DARK_BANNER_COLOR_HEX = '#1e3c72'; 
 
 // Colores del Texto en la Ficha
-const TEXT_COLOR_DARK = '#000000'; // Texto de datos en NEGRO (para zona clara)
-const TEXT_COLOR_BANNER = '#FFFFFF'; // Texto del banner en BLANCO (para zona oscura)
+const TEXT_COLOR_DARK = '#000000'; 
+const TEXT_COLOR_BANNER = '#FFFFFF'; 
 
 // --- CONFIGURACIÓN DEL CLIENTE ---
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages] });
@@ -23,13 +24,13 @@ client.on('ready', () => {
 	console.log(`Bot conectado como ${client.user.tag}`);
 });
 
-// --- MANEJO DE INTERACCIONES ---
+// --- MANEJO DE INTERACCIONES (TODOS LOS COMANDOS) ---
 client.on('interactionCreate', async interaction => {
 	if (!interaction.isChatInputCommand()) return;
 
 	const opts = interaction.options;
 
-    // --- COMANDO /registro ---
+    // --- 1. COMANDO /registro ---
 	if (interaction.commandName === 'registro') {
 		const embed = new EmbedBuilder()
 			.setColor(MP_COLOR) 
@@ -52,7 +53,7 @@ client.on('interactionCreate', async interaction => {
 		await interaction.reply({ embeds: [embed] });
 	}
 
-    // --- COMANDO /personal-accion ---
+    // --- 2. COMANDO /personal-accion ---
     if (interaction.commandName === 'personal-accion') {
         const tipoAccion = opts.getString('tipo-de-accion');
         const funcionario = opts.getUser('funcionario-afectado');
@@ -95,7 +96,7 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [embedPersonal] });
     }
 
-    // --- COMANDO /anuncio (Generador de Embed) ---
+    // --- 3. COMANDO /anuncio (Generador de Embed) ---
     if (interaction.commandName === 'anuncio') {
         const titulo = opts.getString('titulo');
         const descripcion = opts.getString('descripcion');
@@ -104,6 +105,7 @@ client.on('interactionCreate', async interaction => {
         const thumbnailUrl = opts.getString('thumbnail-url');
         const pieDePagina = opts.getString('pie-de-pagina') || 'Secretaría de la Fiscalía General';
 
+        // Validación de color
         const colorValido = /^#[0-9A-F]{6}$/i.test(colorHex);
         const finalColor = colorValido ? colorHex : MP_COLOR;
 
@@ -120,7 +122,7 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [anuncioEmbed] });
     }
 
-    // --- COMANDO /personal-moderacion ---
+    // --- 4. COMANDO /personal-moderacion ---
     if (interaction.commandName === 'personal-moderacion') {
         
         if (!interaction.member.permissions.has(PermissionsBitField.Flags.KickMembers)) {
@@ -203,7 +205,7 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // --- COMANDO /anuncio-oficial ---
+    // --- 5. COMANDO /anuncio-oficial ---
     if (interaction.commandName === 'anuncio-oficial') {
         const mensaje = opts.getString('mensaje');
         const tituloCorto = opts.getString('titulo-corto');
@@ -219,7 +221,7 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [embedOficial] });
     }
 
-    // --- COMANDO /ficha-oficial (ESTABLE Y LEGIBLE) ---
+    // --- 6. COMANDO /ficha-oficial (CANVAS) ---
     if (interaction.commandName === 'ficha-oficial') {
         
         // 1. Ejecución inmediata del deferReply (CRÍTICO para evitar timeouts)
@@ -281,11 +283,10 @@ client.on('interactionCreate', async interaction => {
             context.restore();
         }
 
-
         // 6. Escribir Título Principal (Verdana)
         context.font = 'bold 28px Verdana'; 
         context.fillStyle = TEXT_COLOR_BANNER; // BLANCO
-        context.fillText('FISCALÍA GENERAL', 120, 45); 
+        context.fillText('FISCALÍA GENERAL DE LA REPÚBLICA', 120, 45); 
 
         // 7. Escribir Nombre de Usuario (Tag) (Verdana)
         context.font = '22px Verdana'; 
@@ -350,6 +351,70 @@ client.on('interactionCreate', async interaction => {
 
         // 14. Enviar el Embed y el Attachment
         await interaction.editReply({ embeds: [fichaEmbed], files: [attachment] });
+    }
+
+    // --- 7. COMANDO /solicitud-informacion ---
+    if (interaction.commandName === 'solicitud-informacion') {
+        const expediente = opts.getString('expediente-asociado');
+        const dependencia = opts.getString('dependencia-solicitada');
+        const documento = opts.getString('documento-requerido');
+        const plazo = opts.getInteger('plazo-horas');
+        const remitente = opts.getUser('funcionario-remitente');
+        
+        // Calcular la fecha límite usando Unix Timestamp
+        const fechaLimite = new Date();
+        fechaLimite.setHours(fechaLimite.getHours() + plazo);
+        const timestampLimite = Math.floor(fechaLimite.getTime() / 1000); 
+
+        const solicitudEmbed = new EmbedBuilder()
+            .setColor(MP_COLOR)
+            .setTitle('🚨 REQUERIMIENTO OFICIAL DE INFORMACIÓN (DILIGENCIA URGENTE)')
+            .setDescription(`Se emite la presente solicitud a la dependencia **${dependencia}** con carácter de **urgencia procesal**.`)
+            .setThumbnail(THUMBNAIL_URL)
+            .addFields(
+                { name: 'I. N° EXPEDIENTE', value: `\`${expediente}\``, inline: false },
+                { name: 'II. DEPENDENCIA REQUERIDA', value: dependencia, inline: true },
+                { name: 'III. REMITENTE', value: `${remitente}`, inline: true },
+                { name: '\u200B', value: '\u200B', inline: true }, 
+                { name: 'IV. DOCUMENTACIÓN/EVIDENCIA REQUERIDA', value: documento, inline: false },
+                { name: 'V. PLAZO DE CUMPLIMIENTO', value: `Se exige la entrega de la información en un plazo perentorio de **${plazo} horas**.\n**Fecha Límite:** <t:${timestampLimite}:F> (<t:${timestampLimite}:R>)`, inline: false }
+            )
+            .setFooter({ text: `Emitido por orden del Despacho Fiscal | El incumplimiento será objeto de investigación.` })
+            .setTimestamp();
+
+        await interaction.reply({ embeds: [solicitudEmbed] });
+    }
+
+    // --- 8. COMANDO /orden-judicial-solicitud ---
+    if (interaction.commandName === 'orden-judicial-solicitud') {
+        const expediente = opts.getString('expediente-asociado');
+        const tipoOrden = opts.getString('tipo-orden');
+        const motivo = opts.getString('motivo-fundamento');
+        const plazo = opts.getInteger('plazo-dias');
+        const fiscal = opts.getUser('fiscal-remitente');
+        const pingPoderJudicial = opts.getString('poder-judicial-ping'); 
+
+        const solicitudJudicialEmbed = new EmbedBuilder()
+            .setColor(MP_COLOR)
+            .setTitle('🏛️ SOLICITUD DE AUTORIZACIÓN JUDICIAL (ORDEN DE...)')
+            .setDescription(`El Despacho Fiscal requiere la **autorización judicial** del Poder Judicial para la ejecución de la siguiente orden, en cumplimiento de la Ley Penal Procesal.`)
+            .setThumbnail(THUMBNAIL_URL)
+            .addFields(
+                { name: 'I. EXPEDIENTE ASOCIADO', value: `\`${expediente}\``, inline: false },
+                { name: 'II. TIPO DE ORDEN SOLICITADA', value: `**${tipoOrden.toUpperCase()}**`, inline: true },
+                { name: 'III. PLAZO SOLICITADO', value: `**${plazo}** días de vigencia.`, inline: true },
+                { name: '\u200B', value: '\u200B', inline: true },
+                { name: 'IV. FUNDAMENTO LEGAL Y MOTIVO', value: motivo, inline: false },
+                { name: 'V. FISCAL REMITENTE', value: `${fiscal}`, inline: false }
+            )
+            .setFooter({ text: `Requiere Aprobación o Negativa Inmediata del Tribunal competente.` })
+            .setTimestamp();
+
+        // Envía el ping en el 'content' y el embed en 'embeds'
+        await interaction.reply({ 
+            content: `**‼️ REQUERIMIENTO URGENTE:** Se requiere la revisión de ${pingPoderJudicial}.`,
+            embeds: [solicitudJudicialEmbed] 
+        });
     }
 });
 
