@@ -1,10 +1,13 @@
 const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, ApplicationCommandOptionType, AttachmentBuilder } = require('discord.js');
 require('dotenv').config();
-const { createCanvas, loadImage } = require('canvas'); // Importar Canvas
+const { createCanvas, loadImage } = require('canvas');
 
 // URLs de Imágenes
 const HEADER_IMAGE_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448518866035544273/ministerio_publico_venezuela.png?ex=693b8dd1&is=693a3c51&hm=e20e1ae17a49040fa39067e08869a769883acc67abd69dea54f97141547eec96&=&format=webp&quality=lossless&width=1172&height=313';
 const THUMBNAIL_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448517274800754728/MINISTERIO_PUBLICO_DE_VENEZUELA_LOGO.png?ex=693b8c56&is=693a3ad6&hm=83af40c13feafd3bc91a944be73cab55a235379089fd165743a596cc33dfeb4a&=&format=webp&quality=lossless&width=675&height=675';
+
+// URL DEL PATRÓN DE FONDO
+const BACKGROUND_PATTERN_URL = 'https://e1.pxfuel.com/desktop-wallpaper/264/517/desktop-wallpaper-blue-id-card-backgrounds.jpg'; 
 
 // COLOR HEX UNIFICADO DE LA FISCALÍA
 const MP_COLOR = 0x001F4E; 
@@ -211,7 +214,7 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [embedOficial] });
     }
 
-    // --- LÓGICA DEL COMANDO /ficha-oficial (CON CANVAS MEJORADO) ---
+    // --- LÓGICA DEL COMANDO /ficha-oficial (CON IMAGEN DE FONDO Y FUENTE VERDANA) ---
     if (interaction.commandName === 'ficha-oficial') {
         
         await interaction.deferReply(); 
@@ -225,13 +228,21 @@ client.on('interactionCreate', async interaction => {
         // 1. Configuración del Canvas (Tarjeta de 600x300)
         const canvas = createCanvas(600, 300);
         const context = canvas.getContext('2d');
+        
+        // --- DIBUJAR FONDO ---
+        
+        try {
+            const background = await loadImage(BACKGROUND_PATTERN_URL);
+            context.drawImage(background, 0, 0, canvas.width, canvas.height);
 
-        // 2. Dibujar fondo de Fiscalía (Azul Oscuro)
-        context.fillStyle = MP_COLOR_HEX;
-        context.fillRect(0, 0, 600, 300);
-
-        // 3. Dibujar Banner Superior (para el encabezado y logo)
-        context.fillStyle = '#1e3c72'; // Un tono ligeramente más claro
+        } catch (e) {
+            console.warn('Advertencia: No se pudo cargar la imagen de fondo. Usando color sólido MP_COLOR_HEX como respaldo.', e);
+            context.fillStyle = MP_COLOR_HEX;
+            context.fillRect(0, 0, 600, 300);
+        }
+        
+        // 3. Dibujar Banner Superior Sólido
+        context.fillStyle = '#1e3c72'; 
         context.fillRect(0, 0, 600, 100);
         
         // 4. Dibujar Foto de Perfil (Avatar del Funcionario)
@@ -258,15 +269,15 @@ client.on('interactionCreate', async interaction => {
             console.error('Error cargando avatar:', e);
         }
 
-        // 5. Escribir Título Principal (Mejor Posicionado)
-        context.font = 'bold 28px Sans-Serif'; 
+        // 5. Escribir Título Principal (Verdana)
+        context.font = 'bold 28px Verdana'; 
         context.fillStyle = '#FFFFFF';
-        context.fillText('FISCALÍA GENERAL', 120, 45); // Y=45 (más arriba)
+        context.fillText('FISCALÍA GENERAL DE LA REPÚBLICA', 120, 45); 
 
-        // 6. Escribir Nombre de Usuario (Tag) (Mejor Posicionado)
-        context.font = '22px Sans-Serif'; 
+        // 6. Escribir Nombre de Usuario (Tag) (Verdana)
+        context.font = '22px Verdana'; 
         context.fillStyle = '#FFFFFF';
-        context.fillText(`${funcionario.tag}`, 120, 80); // Y=80 (separado del título)
+        context.fillText(`${funcionario.tag}`, 120, 80); 
 
         // 7. Línea Separadora
         context.strokeStyle = '#FFFFFF';
@@ -276,35 +287,41 @@ client.on('interactionCreate', async interaction => {
         context.lineTo(580, 110);
         context.stroke();
 
-        // 8. Escribir Datos del Funcionario (Títulos y Datos, tamaño reducido a 22px)
+        // 8. Escribir Datos del Funcionario (Títulos y Datos, tamaño 22px, Verdana)
         context.fillStyle = '#FFFFFF';
         
         // Cargo
-        context.font = 'bold 22px Sans-Serif'; 
+        context.font = 'bold 22px Verdana'; 
         context.fillText('CARGO:', 20, 150);
-        context.font = '22px Sans-Serif';
+        context.font = '22px Verdana'; 
         context.fillText(cargo, 200, 150);
 
         // Registro
-        context.font = 'bold 22px Sans-Serif';
+        context.font = 'bold 22px Verdana'; 
         context.fillText('REGISTRO N°:', 20, 190);
-        context.font = '22px Sans-Serif';
+        context.font = '22px Verdana'; 
         context.fillText(registro, 200, 190);
         
         // Autoridad
-        context.font = 'bold 22px Sans-Serif';
+        context.font = 'bold 22px Verdana'; 
         context.fillText('AUTORIDAD:', 20, 230);
-        context.font = '22px Sans-Serif';
+        context.font = '22px Verdana'; 
         context.fillText(autoridad, 200, 230);
 
         // 9. Footer (fecha)
-        context.font = '16px Sans-Serif';
+        context.font = '16px Verdana'; 
         context.fillStyle = '#CCCCCC';
         context.fillText(`Emitida: ${new Date().toLocaleDateString('es-ES')}`, 400, 280);
 
 
         // 10. Generar Buffer PNG
-        const buffer = canvas.toBuffer('image/png');
+        let buffer;
+        try {
+            buffer = canvas.toBuffer('image/png');
+        } catch (e) {
+             console.error('Error al convertir canvas a buffer:', e);
+             return interaction.editReply({ content: '❌ Error crítico: Falló la generación del archivo PNG.', ephemeral: true });
+        }
         
         // 11. Crear el Attachment de Discord
         const attachment = new AttachmentBuilder(buffer, { name: filename });
