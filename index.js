@@ -261,7 +261,7 @@ client.on('interactionCreate', async interaction => {
         // 5. Escribir Título Principal (Mejor Posicionado)
         context.font = 'bold 28px Sans-Serif'; 
         context.fillStyle = '#FFFFFF';
-        context.fillText('FISCALÍA GENERAL DE LA REPÚBLICA', 120, 45); // Y=45 (más arriba)
+        context.fillText('FISCALÍA GENERAL', 120, 45); // Y=45 (más arriba)
 
         // 6. Escribir Nombre de Usuario (Tag) (Mejor Posicionado)
         context.font = '22px Sans-Serif'; 
