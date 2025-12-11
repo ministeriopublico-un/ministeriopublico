@@ -1,172 +1,167 @@
 const { REST, Routes, ApplicationCommandOptionType } = require('discord.js');
 require('dotenv').config();
 
-const commands = [
-    // COMANDO 1: REGISTRO DE INVESTIGACIÓN
-	{
-		name: 'registro',
-		description: 'Registrar una investigación con datos completos',
-		options: [
-			{ name: 'numero-de-expediente-de-fiscalia', type: ApplicationCommandOptionType.String, description: 'Número de expediente', required: true },
-			{
-				name: 'directorio-o-seccion-asignada',
-				type: ApplicationCommandOptionType.String,
-				description: 'Fiscalía/Sección asignada',
-				required: true,
-				choices: [
-					{ name: 'Dir. DD.HH. (「⬢」)', value: 'Dir. DD.HH.' },
-					{ name: 'Dir. Delinc. Org. (「⬣」)', value: 'Dir. Delincuencia Org.' },
-					{ name: 'Dir. Corrupción (「⬤」)', value: 'Dir. Corrupción' },
-					{ name: 'Fiscalía Territorial', value: 'Fiscalia Territorial' },
-				],
-			},
-			{ name: 'fiscal-responsable', type: ApplicationCommandOptionType.User, description: 'Fiscal responsable (@usuario)', required: true },
-			{ name: 'fecha-y-hora-de-la-apertura', type: ApplicationCommandOptionType.String, description: 'Fecha y hora de apertura', required: true },
-			{ name: 'fuente-de-la-denuncia', type: ApplicationCommandOptionType.String, description: 'Fuente de la denuncia (Ej. Ticket #XXXX)', required: true },
-			{
-				name: 'calificacion-penal-preliminar',
-				type: ApplicationCommandOptionType.String,
-				description: 'Calificación penal preliminar',
-				required: true,
-				choices: [
-					{ name: 'Homicidio Calificado', value: 'Homicidio Calificado' },
-					{ name: 'Abuso de Autoridad', value: 'Abuso de Autoridad' },
-					{ name: 'Corrupción/Cohecho', value: 'Corrupción/Cohecho' },
-					{ name: 'Lesiones Personales', value: 'Lesiones Personales' },
-					{ name: 'N/A', value: 'N/A' },
-				],
-			},
-			{ name: 'jurisdiccion-territorial', type: ApplicationCommandOptionType.String, description: 'Jurisdicción territorial', required: true },
-			
-            { name: 'datos-del-denunciante', type: ApplicationCommandOptionType.User, description: 'Datos del denunciante (@usuario)', required: true },
-			{ name: 'datos-de-la-victima', type: ApplicationCommandOptionType.User, description: 'Datos de la víctima (@usuario)', required: true },
-			{ name: 'datos-del-imputado-o-imputada', type: ApplicationCommandOptionType.User, description: 'Datos del imputado/a (@usuario)', required: true },
-			
-            { name: 'representacion-legal', type: ApplicationCommandOptionType.String, description: 'Representación legal (Abogado/Defensor Público)', required: true },
-			{ name: 'descripcion-circunstanciada', type: ApplicationCommandOptionType.String, description: 'Descripción circunstanciada del hecho', required: true },
-			{ name: 'lugar-fecha-y-hora-del-hecho', type: ApplicationCommandOptionType.String, description: 'Lugar, fecha y hora del hecho', required: true },
-			
-            {
-				name: 'decision-sobre-confidencialidad',
-				type: ApplicationCommandOptionType.String,
-				description: 'Decisión sobre confidencialidad',
-				required: true,
-				choices: [
-					{ name: 'PÚBLICO (No sensible)', value: 'PÚBLICO' },
-					{ name: 'RESERVADO (Alto perfil)', value: 'RESERVADO' },
-					{ name: 'SECRETO (Conflicto de interés)', value: 'SECRETO' },
-				],
-			},
-			
-            { name: 'instrucciones-a-la-policia', type: ApplicationCommandOptionType.String, description: 'Instrucciones a la policía', required: true },
-			{ name: 'elementos-de-conviccion-recibido', type: ApplicationCommandOptionType.String, description: 'Elementos de convicción recibidos', required: true },
-			{ name: 'registro-de-actuacion-policial', type: ApplicationCommandOptionType.String, description: 'Registro de actuación policial', required: true },
-			{ name: 'requerimientos-de-peritaje', type: ApplicationCommandOptionType.String, description: 'Requerimientos de peritaje', required: true },
-			{ name: 'acciones-para-la-proteccion-vict', type: ApplicationCommandOptionType.String, description: 'Acciones de protección a la víctima', required: true },
-			{ name: 'plazo-para-el-primer-informe', type: ApplicationCommandOptionType.String, description: 'Plazo para el primer informe', required: true }
-		]
-	},
+// Obtener variables del entorno
+const { CLIENT_ID, GUILD_ID, TOKEN } = process.env;
 
-    // COMANDO 2: ACCIÓN DE PERSONAL Y DISCIPLINA
+// Array que contendrá la definición de todos los comandos
+const commands = [
+    // 1. COMANDO /registro
+	{
+        name: 'registro',
+        description: 'Registra formalmente la apertura de una nueva investigación fiscal (expediente).',
+        options: [
+            { name: 'numero-de-expediente-de-fiscalia', description: 'Número único de expediente (Ej: MP-2025-001).', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'directorio-o-seccion-asignada', description: 'Fiscalía o Sección interna responsable.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'fiscal-responsable', description: 'El Fiscal que asume el expediente.', type: ApplicationCommandOptionType.User, required: true },
+            { name: 'fecha-y-hora-de-la-apertura', description: 'Fecha y hora en que se abrió la investigación.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'fuente-de-la-denuncia', description: 'Cómo se inició el proceso (Ej: Denuncia ciudadana, Oficio policial).', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'calificacion-penal-preliminar', description: 'Delito preliminar (Ej: Homicidio Calificado, Fraude Electrónico).', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'jurisdiccion-territorial', description: 'Ubicación territorial donde ocurrió el hecho o se abre el expediente.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'datos-del-denunciante', description: 'La persona o entidad que presentó la denuncia.', type: ApplicationCommandOptionType.User, required: true },
+            { name: 'datos-de-la-victima', description: 'La persona o entidad víctima del hecho.', type: ApplicationCommandOptionType.User, required: true },
+            { name: 'datos-del-imputado-o-imputada', description: 'La persona señalada como autora o partícipe (si aplica).', type: ApplicationCommandOptionType.User, required: true },
+            { name: 'representacion-legal', description: 'Abogados o representantes legales de las partes (si aplica).', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'descripcion-circunstanciada', description: 'Detalle breve y circunstanciado del hecho punible.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'lugar-fecha-y-hora-del-hecho', description: 'Coordenadas o descripción del lugar, fecha y hora del suceso.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'elementos-de-conviccion-recibido', description: 'Evidencia inicial recibida (Ej: Testimonios, videos, documentos).', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'decision-sobre-confidencialidad', description: 'Si el expediente será reservado o público.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'instrucciones-a-la-policia', description: 'Órdenes inmediatas a la policía (Ej: Aprehensión, Vigilancia).', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'registro-de-actuacion-policial', description: 'Número o referencia del registro policial inicial.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'requerimientos-de-peritaje', description: 'Si se requiere examen forense, balístico, etc.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'acciones-para-la-proteccion-vict', description: 'Medidas cautelares para la víctima/testigos (si aplica).', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'plazo-para-el-primer-informe', description: 'Plazo para que la policía entregue el primer informe.', type: ApplicationCommandOptionType.String, required: true },
+        ],
+    },
+    // 2. COMANDO /personal-accion
     {
         name: 'personal-accion',
-        description: 'Genera un anuncio de Promoción, Degradación, Sanción o Remoción de un Fiscal',
+        description: 'Notifica movimientos de personal (Promoción, Degradación, Sanción o Remoción).',
         options: [
             {
                 name: 'tipo-de-accion',
+                description: 'Seleccione el tipo de acción oficial de personal.',
                 type: ApplicationCommandOptionType.String,
-                description: 'Seleccione la acción de personal a notificar',
                 required: true,
                 choices: [
-                    { name: 'PROMOCIÓN (Subida de rango)', value: 'PROMOCION' },
-                    { name: 'DEGRADACIÓN (Baja de rango)', value: 'DEGRADACION' },
-                    { name: 'MEDIDA DISCIPLINARIA (Sanción)', value: 'SANCION' },
-                    { name: 'REMOCIÓN (Expulsión)', value: 'REMOCION' },
+                    { name: 'PROMOCIÓN', value: 'PROMOCION' },
+                    { name: 'DEGRADACIÓN', value: 'DEGRADACION' },
+                    { name: 'SANCIÓN DISCIPLINARIA', value: 'SANCION' },
+                    { name: 'REMOCIÓN/EXPULSIÓN', value: 'REMOCION' },
                 ],
             },
-            { name: 'funcionario-afectado', type: ApplicationCommandOptionType.User, description: 'El Fiscal o funcionario objeto de la acción', required: true },
-            { name: 'rango-o-estado-anterior', type: ApplicationCommandOptionType.String, description: 'Rango o estado actual del funcionario', required: true },
-            { name: 'rango-o-estado-nuevo', type: ApplicationCommandOptionType.String, description: 'Rango o estado después de la acción', required: true },
-            { name: 'motivo-oficial', type: ApplicationCommandOptionType.String, description: 'La justificación oficial de la acción', required: true },
-            { name: 'autoridad-firmante', type: ApplicationCommandOptionType.String, description: 'La autoridad que emite la orden (Ej. Fiscal General)', required: true },
+            { name: 'funcionario-afectado', description: 'Miembro del personal que será afectado por la acción.', type: ApplicationCommandOptionType.User, required: true },
+            { name: 'rango-o-estado-anterior', description: 'Rango/Estado/Cargo que tenía antes de la acción.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'rango-o-estado-nuevo', description: 'El nuevo Rango/Estado/Cargo después de la acción.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'motivo-oficial', description: 'El motivo oficial emitido por la Dirección de RR.HH.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'autoridad-firmante', description: 'Nombre de la autoridad que firma la orden (Ej: Fiscal General, Director RR.HH.).', type: ApplicationCommandOptionType.String, required: true },
         ],
     },
-    
-    // COMANDO 3: GENERADOR DE EMBED UNIVERSAL
+    // 3. COMANDO /anuncio (General)
     {
         name: 'anuncio',
-        description: 'Genera un embed personalizado para anuncios o documentos generales.',
+        description: 'Publica un anuncio general usando un Embed personalizado.',
         options: [
-            { name: 'titulo', type: ApplicationCommandOptionType.String, description: 'Título principal del anuncio (Requerido)', required: true },
-            { name: 'descripcion', type: ApplicationCommandOptionType.String, description: 'Cuerpo principal del mensaje o documento (Requerido)', required: true },
-            { name: 'color-hex', type: ApplicationCommandOptionType.String, description: 'Color del borde en código HEX (Ej: #003366)', required: false },
-            { name: 'imagen-principal-url', type: ApplicationCommandOptionType.String, description: 'URL de la imagen grande de cabecera', required: false },
-            { name: 'thumbnail-url', type: ApplicationCommandOptionType.String, description: 'URL de la imagen pequeña (logo/sello)', required: false },
-            { name: 'pie-de-pagina', type: ApplicationCommandOptionType.String, description: 'Texto que aparecerá en la parte inferior (Ej: Secretaría)', required: false },
+            { name: 'titulo', description: 'Título principal del anuncio.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'descripcion', description: 'Cuerpo del mensaje del anuncio.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'color-hex', description: 'Color del borde del embed (Ej: #FF0000 para rojo).', type: ApplicationCommandOptionType.String, required: false },
+            { name: 'imagen-principal-url', description: 'URL de la imagen grande a usar en el anuncio.', type: ApplicationCommandOptionType.String, required: false },
+            { name: 'thumbnail-url', description: 'URL de la imagen pequeña (thumbnail) a usar.', type: ApplicationCommandOptionType.String, required: false },
+            { name: 'pie-de-pagina', description: 'Texto del pie de página del anuncio.', type: ApplicationCommandOptionType.String, required: false },
         ],
     },
-
-    // COMANDO 4: MODERACIÓN PERSONALIZADA
+    // 4. COMANDO /personal-moderacion
     {
         name: 'personal-moderacion',
-        description: 'Comandos de moderación esenciales para el manejo del servidor.',
+        description: 'Ejecuta acciones de moderación (requiere permisos de Moderador/Administrador).',
         options: [
             {
                 name: 'accion',
+                description: 'Acción de moderación a ejecutar.',
                 type: ApplicationCommandOptionType.String,
-                description: 'El tipo de acción de moderación a ejecutar.',
                 required: true,
                 choices: [
-                    { name: 'BAN (Remoción total de la República)', value: 'BAN' },
-                    { name: 'KICK (Expulsión inmediata)', value: 'KICK' },
-                    { name: 'TIMEOUT (Silencio temporal, mute)', value: 'TIMEOUT' },
-                    { name: 'CLEAR (Eliminar mensajes)', value: 'CLEAR' },
-                    { name: 'ADD-ROLE (Agregar rol)', value: 'ADD_ROLE' },
-                    { name: 'REMOVE-ROLE (Remover rol)', value: 'REMOVE_ROLE' },
+                    { name: 'BAN (Remoción Total)', value: 'BAN' },
+                    { name: 'KICK (Expulsión)', value: 'KICK' },
+                    { name: 'TIMEOUT (Silencio Temporal)', value: 'TIMEOUT' },
+                    { name: 'LIMPIAR MENSAJES (Clear)', value: 'CLEAR' },
+                    { name: 'ASIGNAR ROL', value: 'ADD_ROLE' },
+                    { name: 'REMOVER ROL', value: 'REMOVE_ROLE' },
                 ],
             },
-            { name: 'usuario', type: ApplicationCommandOptionType.User, description: 'El usuario afectado (excepto para CLEAR)', required: false },
-            { name: 'razon', type: ApplicationCommandOptionType.String, description: 'Motivo de la acción (Requerido para BAN/KICK/TIMEOUT)', required: false },
-            { name: 'tiempo-segundos', type: ApplicationCommandOptionType.Integer, description: 'Duración del silencio (TIMEOUT). Mínimo 10s.', required: false },
-            { name: 'cantidad-mensajes', type: ApplicationCommandOptionType.Integer, description: 'Número de mensajes a eliminar (CLEAR)', required: false },
-            { name: 'rol', type: ApplicationCommandOptionType.Role, description: 'El rol a asignar/remover (ADD/REMOVE-ROLE)', required: false },
+            { name: 'usuario', description: 'El usuario afectado por la acción (no aplica para CLEAR).', type: ApplicationCommandOptionType.User, required: false },
+            { name: 'razon', description: 'Motivo oficial de la acción de moderación.', type: ApplicationCommandOptionType.String, required: false },
+            { name: 'tiempo-segundos', description: 'Duración del silencio (solo para TIMEOUT, en segundos).', type: ApplicationCommandOptionType.Integer, required: false },
+            { name: 'cantidad-mensajes', description: 'Cantidad de mensajes a limpiar (solo para CLEAR, máx 100).', type: ApplicationCommandOptionType.Integer, required: false },
+            { name: 'rol', description: 'El rol a asignar o remover (solo para ADD/REMOVE_ROLE).', type: ApplicationCommandOptionType.Role, required: false },
         ],
     },
-
-    // COMANDO 5: ANUNCIO OFICIAL
+    // 5. COMANDO /anuncio-oficial
     {
         name: 'anuncio-oficial',
-        description: 'Envía un mensaje rápido, limpio y oficial en nombre de la Fiscalía.',
+        description: 'Publica un comunicado oficial de la Fiscalía.',
         options: [
-            { name: 'mensaje', type: ApplicationCommandOptionType.String, description: 'El contenido principal del comunicado (máx 1024 caracteres).', required: true },
-            { name: 'titulo-corto', type: ApplicationCommandOptionType.String, description: 'Título del comunicado (Ej: CELERIDAD PROCESAL)', required: true },
+            { name: 'titulo-corto', description: 'Título corto del comunicado (Ej: Cierre de Despacho).', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'mensaje', description: 'Contenido completo del comunicado oficial.', type: ApplicationCommandOptionType.String, required: true },
         ],
     },
-
-    // COMANDO 6: FICHA OFICIAL DE PERSONAL
+    // 6. COMANDO /ficha-oficial (CANVAS)
     {
         name: 'ficha-oficial',
-        description: 'Genera una ficha de identificación y registro de un funcionario o abogado.',
+        description: 'Genera la Tarjeta de Identificación Oficial de un Funcionario.',
         options: [
-            { name: 'funcionario', type: ApplicationCommandOptionType.User, description: 'El usuario del funcionario a quien se emite la ficha.', required: true },
-            { name: 'cargo-actual', type: ApplicationCommandOptionType.String, description: 'El cargo que ocupa actualmente (Ej: Fiscal Municipal).', required: true },
-            { name: 'registro-nacional', type: ApplicationCommandOptionType.String, description: 'Número de Registro o Cédula de Identidad (ON-ROL).', required: true },
-            { name: 'autoridad-emite', type: ApplicationCommandOptionType.String, description: 'Autoridad que certifica la ficha (Ej: Dir. RR.HH.).', required: true },
+            { name: 'funcionario', description: 'El usuario de Discord para el que se emite la ficha.', type: ApplicationCommandOptionType.User, required: true },
+            { name: 'cargo-actual', description: 'El cargo o título actual del funcionario.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'registro-nacional', description: 'Número de registro interno o Cédula.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'autoridad-emite', description: 'La autoridad que certifica la ficha (Ej: Dir. RR.HH.).', type: ApplicationCommandOptionType.String, required: true },
+        ],
+    },
+    // 7. COMANDO /solicitud-informacion
+    {
+        name: 'solicitud-informacion',
+        description: 'Genera un requerimiento oficial de información o diligencia a otra dependencia.',
+        options: [
+            { name: 'expediente-asociado', description: 'Número de Expediente Fiscal.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'dependencia-solicitada', description: 'El departamento o cuerpo policial al que se dirige la solicitud.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'documento-requerido', description: 'El material o evidencia específica que se necesita.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'plazo-horas', description: 'El tiempo límite para la entrega de la información (en horas).', type: ApplicationCommandOptionType.Integer, required: true },
+            { name: 'funcionario-remitente', description: 'El Fiscal o Funcionario que emite la solicitud.', type: ApplicationCommandOptionType.User, required: true },
+        ],
+    },
+    // 8. COMANDO /orden-judicial-solicitud
+    {
+        name: 'orden-judicial-solicitud',
+        description: 'Solicita al Poder Judicial la autorización para ejecutar una orden judicial.',
+        options: [
+            { name: 'expediente-asociado', description: 'Número de Expediente Fiscal.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'tipo-orden', description: 'Tipo de orden requerida (ej: Detención, Allanamiento, Interceptación, etc.).', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'motivo-fundamento', description: 'Fundamento legal y motivo detallado por el cual se solicita la orden.', type: ApplicationCommandOptionType.String, required: true },
+            { name: 'plazo-dias', description: 'Vigencia (en días) que se solicita para la orden judicial.', type: ApplicationCommandOptionType.Integer, required: true },
+            { name: 'fiscal-remitente', description: 'El Fiscal o Funcionario que emite la solicitud al Tribunal.', type: ApplicationCommandOptionType.User, required: true },
+            { name: 'poder-judicial-ping', description: 'Mención (@rol o @usuario) del Poder Judicial para notificar.', type: ApplicationCommandOptionType.String, required: true },
         ],
     },
 ];
 
-const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+// Instancia de REST
+const rest = new REST({ version: '10' }).setToken(TOKEN);
 
+// Función de despliegue
 (async () => {
 	try {
-		console.log('Registrando comandos slash...');
-		await rest.put(
-			Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
-			{ body: commands }
+		console.log(`Iniciando el despliegue de ${commands.length} comandos de aplicación.`);
+
+		// El método `put` registra (o sobrescribe) todos los comandos en el servidor.
+		const data = await rest.put(
+			// Utiliza Routes.applicationGuildCommands para comandos específicos de un servidor (más rápido en desarrollo)
+            // Para producción, usa Routes.applicationCommands(CLIENT_ID)
+			Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
+			{ body: commands },
 		);
-		console.log('Todos los comandos registrados correctamente.');
+
+		console.log(`Despliegue exitoso. Se cargaron ${data.length} comandos.`);
 	} catch (error) {
+		// Asegúrate de manejar cualquier error
 		console.error(error);
 	}
 })();
