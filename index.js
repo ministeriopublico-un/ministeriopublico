@@ -49,7 +49,7 @@ client.on('interactionCreate', async interaction => {
           `5. **Plazo para Primer Informe:** ${opts.getString('plazo-para-el-primer-informe')}`
         }
       )
-      .setFooter({ text: 'Ministerio Público ⚖️' });
+      .setFooter({ text: 'Fiscalia General de la Republica' });
 
     await interaction.reply({ embeds: [embed] });
   }
