@@ -1,47 +1,28 @@
 const { Client, GatewayIntentBits } = require('discord.js');
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-  ]
-});
+require('dotenv').config();
+
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.on('ready', () => {
   console.log(`Bot conectado como ${client.user.tag}`);
 });
 
-// !ping → prueba de conexión
-client.on('messageCreate', message => {
-  if (message.content === '!ping') {
-    message.reply('¡Pong! ⚖️');
-  }
-});
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isChatInputCommand()) return;
 
-// !acto → registrar actos institucionales
-client.on('messageCreate', message => {
-  if (message.content.startsWith('!acto')) {
-    const args = message.content.split(' ').slice(1);
-    const contenido = args.join(' ');
-    message.channel.send(`📜 Se registra el acto institucional: ${contenido}`);
+  if (interaction.commandName === 'acto') {
+    const contenido = interaction.options.getString('contenido');
+    await interaction.reply(`📜 Se registra el acto institucional: ${contenido}`);
   }
-});
 
-// !sancion → aplicar medidas disciplinarias
-client.on('messageCreate', message => {
-  if (message.content.startsWith('!sancion')) {
-    const args = message.content.split(' ').slice(1);
-    const contenido = args.join(' ');
-    message.channel.send(`⚠️ Se aplica medida disciplinaria: ${contenido}`);
+  if (interaction.commandName === 'sancion') {
+    const contenido = interaction.options.getString('contenido');
+    await interaction.reply(`⚠️ Se aplica medida disciplinaria: ${contenido}`);
   }
-});
 
-// !jerarquia → asignar rango institucional
-client.on('messageCreate', message => {
-  if (message.content.startsWith('!jerarquia')) {
-    const args = message.content.split(' ').slice(1);
-    const contenido = args.join(' ');
-    message.channel.send(`🏛️ Se ha conferido rango jerárquico: ${contenido}`);
+  if (interaction.commandName === 'jerarquia') {
+    const contenido = interaction.options.getString('contenido');
+    await interaction.reply(`🏛️ Se ha conferido rango jerárquico: ${contenido}`);
   }
 });
 
