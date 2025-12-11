@@ -2,7 +2,7 @@ const { REST, Routes, ApplicationCommandOptionType } = require('discord.js');
 require('dotenv').config();
 
 const commands = [
-    // COMANDO 1: REGISTRO DE INVESTIGACIÓN
+    // COMANDO 1: REGISTRO DE INVESTIGACIÓN (Existente)
 	{
 		name: 'registro',
 		description: 'Registrar una investigación con datos completos',
@@ -67,7 +67,7 @@ const commands = [
 		]
 	},
 
-    // COMANDO 2: ACCIÓN DE PERSONAL Y DISCIPLINA
+    // COMANDO 2: ACCIÓN DE PERSONAL Y DISCIPLINA (Existente)
     {
         name: 'personal-accion',
         description: 'Genera un anuncio de Promoción, Degradación, Sanción o Remoción de un Fiscal',
@@ -91,6 +91,47 @@ const commands = [
             { name: 'autoridad-firmante', type: ApplicationCommandOptionType.String, description: 'La autoridad que emite la orden (Ej. Fiscal General)', required: true },
         ],
     },
+    
+    // COMANDO 3: GENERADOR DE EMBED UNIVERSAL (Nuevo)
+    {
+        name: 'anuncio',
+        description: 'Genera un embed personalizado para anuncios o documentos generales.',
+        options: [
+            { name: 'titulo', type: ApplicationCommandOptionType.String, description: 'Título principal del anuncio (Requerido)', required: true },
+            { name: 'descripcion', type: ApplicationCommandOptionType.String, description: 'Cuerpo principal del mensaje o documento (Requerido)', required: true },
+            { name: 'color-hex', type: ApplicationCommandOptionType.String, description: 'Color del borde en código HEX (Ej: #003366)', required: false },
+            { name: 'imagen-principal-url', type: ApplicationCommandOptionType.String, description: 'URL de la imagen grande de cabecera', required: false },
+            { name: 'thumbnail-url', type: ApplicationCommandOptionType.String, description: 'URL de la imagen pequeña (logo/sello)', required: false },
+            { name: 'pie-de-pagina', type: ApplicationCommandOptionType.String, description: 'Texto que aparecerá en la parte inferior (Ej: Secretaría)', required: false },
+        ],
+    },
+
+    // COMANDO 4: MODERACIÓN PERSONALIZADA (Nuevo)
+    {
+        name: 'personal-moderacion',
+        description: 'Comandos de moderación esenciales para el manejo del servidor.',
+        options: [
+            {
+                name: 'accion',
+                type: ApplicationCommandOptionType.String,
+                description: 'El tipo de acción de moderación a ejecutar.',
+                required: true,
+                choices: [
+                    { name: 'BAN (Remoción total de la República)', value: 'BAN' },
+                    { name: 'KICK (Expulsión inmediata)', value: 'KICK' },
+                    { name: 'TIMEOUT (Silencio temporal, mute)', value: 'TIMEOUT' },
+                    { name: 'CLEAR (Eliminar mensajes)', value: 'CLEAR' },
+                    { name: 'ADD-ROLE (Agregar rol)', value: 'ADD_ROLE' },
+                    { name: 'REMOVE-ROLE (Remover rol)', value: 'REMOVE_ROLE' },
+                ],
+            },
+            { name: 'usuario', type: ApplicationCommandOptionType.User, description: 'El usuario afectado (excepto para CLEAR)', required: false },
+            { name: 'razon', type: ApplicationCommandOptionType.String, description: 'Motivo de la acción (Requerido para BAN/KICK/TIMEOUT)', required: false },
+            { name: 'tiempo-segundos', type: ApplicationCommandOptionType.Integer, description: 'Duración del silencio (TIMEOUT). Mínimo 10s.', required: false },
+            { name: 'cantidad-mensajes', type: ApplicationCommandOptionType.Integer, description: 'Número de mensajes a eliminar (CLEAR)', required: false },
+            { name: 'rol', type: ApplicationCommandOptionType.Role, description: 'El rol a asignar/remover (ADD/REMOVE-ROLE)', required: false },
+        ],
+    },
 ];
 
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
@@ -102,7 +143,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 			Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
 			{ body: commands }
 		);
-		console.log('Comandos /registro y /personal-accion registrados correctamente.');
+		console.log('Todos los comandos registrados correctamente.');
 	} catch (error) {
 		console.error(error);
 	}
