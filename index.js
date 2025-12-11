@@ -14,7 +14,7 @@ const LIGHT_MP_COLOR_HEX = '#003366';
 const DARK_BANNER_COLOR_HEX = '#1e3c72'; 
 
 // Colores del Texto en la Ficha
-const TEXT_COLOR_DARK = '#000000'; 
+const TEXT_COLOR_DARK = '#FFFFFF'; 
 const TEXT_COLOR_BANNER = '#FFFFFF'; 
 
 // --- CONFIGURACIÓN DEL CLIENTE ---
