@@ -272,7 +272,7 @@ client.on('interactionCreate', async interaction => {
         // 5. Escribir Título Principal (Verdana)
         context.font = 'bold 28px Verdana'; 
         context.fillStyle = '#FFFFFF';
-        context.fillText('FISCALÍA GENERAL DE LA REPÚBLICA', 120, 45); 
+        context.fillText('FISCALÍA GENERAL', 120, 45); 
 
         // 6. Escribir Nombre de Usuario (Tag) (Verdana)
         context.font = '22px Verdana'; 
