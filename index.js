@@ -6,8 +6,8 @@ const { createCanvas, loadImage } = require('canvas');
 const HEADER_IMAGE_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448518866035544273/ministerio_publico_venezuela.png?ex=693b8dd1&is=693a3c51&hm=e20e1ae17a49040fa39067e08869a769883acc67abd69dea54f97141547eec96&=&format=webp&quality=lossless&width=1172&height=313';
 const THUMBNAIL_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448517274800754728/MINISTERIO_PUBLICO_DE_VENEZUELA_LOGO.png?ex=693b8c56&is=693a3ad6&hm=83af40c13feafd3bc91a944be73cab55a235379089fd165743a596cc33dfeb4a&=&format=webp&quality=lossless&width=675&height=675';
 
-// URL DEL PATRÓN DE FONDO
-const BACKGROUND_PATTERN_URL = 'https://e1.pxfuel.com/desktop-wallpaper/264/517/desktop-wallpaper-blue-id-card-backgrounds.jpg'; 
+// URL DEL PATRÓN DE FONDO ELEGIDO (Utilizando una imagen estable de fondo abstracto azul)
+const BACKGROUND_PATTERN_URL = 'https://i.imgur.com/vHq057k.png'; 
 
 // COLOR HEX UNIFICADO DE LA FISCALÍA
 const MP_COLOR = 0x001F4E; 
@@ -15,8 +15,21 @@ const MP_COLOR_HEX = '#001F4E';
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages] });
 
-client.on('ready', () => {
-	console.log(`Bot conectado como ${client.user.tag}`);
+// VARIABLE GLOBAL PARA ALMACENAR EL FONDO PRECargADO
+let loadedBackground = null;
+
+client.on('ready', async () => {
+    console.log(`Bot conectado como ${client.user.tag}`);
+    
+    // CARGAR EL FONDO UNA SOLA VEZ AL INICIO (Para evitar Timeouts en el comando)
+    try {
+        console.log('Cargando patrón de fondo...');
+        loadedBackground = await loadImage(BACKGROUND_PATTERN_URL);
+        console.log('Patrón de fondo cargado exitosamente.');
+    } catch (e) {
+        console.error('ERROR CRÍTICO: No se pudo precargar la imagen de fondo. Las fichas saldrán con color sólido.', e);
+        // Si falla, loadedBackground será null, y el bot usará el color sólido.
+    }
 });
 
 client.on('interactionCreate', async interaction => {
@@ -217,6 +230,7 @@ client.on('interactionCreate', async interaction => {
     // --- LÓGICA DEL COMANDO /ficha-oficial (CON IMAGEN DE FONDO Y FUENTE VERDANA) ---
     if (interaction.commandName === 'ficha-oficial') {
         
+        // Ejecución inmediata del deferReply para evitar el timeout de 3 segundos
         await interaction.deferReply(); 
 
         const funcionario = opts.getUser('funcionario');
@@ -229,14 +243,12 @@ client.on('interactionCreate', async interaction => {
         const canvas = createCanvas(600, 300);
         const context = canvas.getContext('2d');
         
-        // --- DIBUJAR FONDO ---
-        
-        try {
-            const background = await loadImage(BACKGROUND_PATTERN_URL);
-            context.drawImage(background, 0, 0, canvas.width, canvas.height);
-
-        } catch (e) {
-            console.warn('Advertencia: No se pudo cargar la imagen de fondo. Usando color sólido MP_COLOR_HEX como respaldo.', e);
+        // --- DIBUJAR FONDO PRECargADO ---
+        if (loadedBackground) {
+            // Usa el fondo precargado (¡Rápido!)
+            context.drawImage(loadedBackground, 0, 0, canvas.width, canvas.height);
+        } else {
+            // Respaldo: color sólido
             context.fillStyle = MP_COLOR_HEX;
             context.fillRect(0, 0, 600, 300);
         }
@@ -247,6 +259,7 @@ client.on('interactionCreate', async interaction => {
         
         // 4. Dibujar Foto de Perfil (Avatar del Funcionario)
         try {
+            // Cargar avatar (Este es el único paso de red restante)
             const avatar = await loadImage(funcionario.displayAvatarURL({ extension: 'png', size: 128 }));
             
             // Dibujar el marco de la foto (círculo)
