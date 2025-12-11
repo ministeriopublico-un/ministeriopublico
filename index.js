@@ -2,31 +2,34 @@ const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, Applicatio
 require('dotenv').config();
 const { createCanvas, loadImage } = require('canvas');
 
-// URLs de Imágenes
+// --- CONSTANTES GLOBALES DE IMAGEN Y COLOR ---
 const HEADER_IMAGE_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448518866035544273/ministerio_publico_venezuela.png?ex=693b8dd1&is=693a3c51&hm=e20e1ae17a49040fa39067e08869a769883acc67abd69dea54f97141547eec96&=&format=webp&quality=lossless&width=1172&height=313';
 const THUMBNAIL_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448517274800754728/MINISTERIO_PUBLICO_DE_VENEZUELA_LOGO.png?ex=693b8c56&is=693a3ad6&hm=83af40c13feafd3bc91a944be73cab55a235379089fd165743a596cc33dfeb4a&=&format=webp&quality=lossless&width=675&height=675';
 
-// URL DEL PATRÓN DE FONDO (ATENCIÓN: URL INESTABLE. CAMBIAR A FONDO SÓLIDO SI FALLA)
-const BACKGROUND_PATTERN_URL = 'https://i.pinimg.com/736x/cf/d1/61/cfd161579097c313fbc58b41f8547476.jpg'; 
-
-// COLOR HEX UNIFICADO DE LA FISCALÍA
+// Colores de la Fiscalía (MP)
 const MP_COLOR = 0x001F4E; 
 const MP_COLOR_HEX = '#001F4E';
-const TEXT_COLOR_DARK = '#000000'; // Nuevo color de texto: Negro
-const TEXT_COLOR_LIGHT = '#CCCCCC'; // Color de fecha (Footer)
+const LIGHT_MP_COLOR_HEX = '#003366'; // Azul más claro para la zona principal
+const DARK_BANNER_COLOR_HEX = '#1e3c72'; // Color del banner superior (más oscuro)
 
+// Colores del Texto en la Ficha
+const TEXT_COLOR_DARK = '#000000'; // Texto de datos en NEGRO (para zona clara)
+const TEXT_COLOR_BANNER = '#FFFFFF'; // Texto del banner en BLANCO (para zona oscura)
+
+// --- CONFIGURACIÓN DEL CLIENTE ---
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages] });
 
 client.on('ready', () => {
 	console.log(`Bot conectado como ${client.user.tag}`);
 });
 
+// --- MANEJO DE INTERACCIONES ---
 client.on('interactionCreate', async interaction => {
 	if (!interaction.isChatInputCommand()) return;
 
 	const opts = interaction.options;
 
-    // --- LÓGICA DEL COMANDO /registro ---
+    // --- COMANDO /registro ---
 	if (interaction.commandName === 'registro') {
 		const embed = new EmbedBuilder()
 			.setColor(MP_COLOR) 
@@ -49,7 +52,7 @@ client.on('interactionCreate', async interaction => {
 		await interaction.reply({ embeds: [embed] });
 	}
 
-    // --- LÓGICA DEL COMANDO /personal-accion ---
+    // --- COMANDO /personal-accion ---
     if (interaction.commandName === 'personal-accion') {
         const tipoAccion = opts.getString('tipo-de-accion');
         const funcionario = opts.getUser('funcionario-afectado');
@@ -92,7 +95,7 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [embedPersonal] });
     }
 
-    // --- LÓGICA DEL COMANDO /anuncio (Generador de Embed) ---
+    // --- COMANDO /anuncio (Generador de Embed) ---
     if (interaction.commandName === 'anuncio') {
         const titulo = opts.getString('titulo');
         const descripcion = opts.getString('descripcion');
@@ -117,7 +120,7 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [anuncioEmbed] });
     }
 
-    // --- LÓGICA DEL COMANDO /personal-moderacion ---
+    // --- COMANDO /personal-moderacion ---
     if (interaction.commandName === 'personal-moderacion') {
         
         if (!interaction.member.permissions.has(PermissionsBitField.Flags.KickMembers)) {
@@ -200,7 +203,7 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // --- LÓGICA DEL COMANDO /anuncio-oficial ---
+    // --- COMANDO /anuncio-oficial ---
     if (interaction.commandName === 'anuncio-oficial') {
         const mensaje = opts.getString('mensaje');
         const tituloCorto = opts.getString('titulo-corto');
@@ -216,9 +219,10 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({ embeds: [embedOficial] });
     }
 
-    // --- LÓGICA DEL COMANDO /ficha-oficial (CON IMAGEN DE FONDO Y FUENTE VERDANA) ---
+    // --- COMANDO /ficha-oficial (ESTABLE Y LEGIBLE) ---
     if (interaction.commandName === 'ficha-oficial') {
         
+        // 1. Ejecución inmediata del deferReply (CRÍTICO para evitar timeouts)
         await interaction.deferReply(); 
 
         const funcionario = opts.getUser('funcionario');
@@ -227,31 +231,39 @@ client.on('interactionCreate', async interaction => {
         const autoridad = opts.getString('autoridad-emite');
         const filename = `id_ficha_${funcionario.id}.png`;
 
-        // 1. Configuración del Canvas (Tarjeta de 600x300)
+        // 2. Configuración del Canvas (Tarjeta de 600x300)
         const canvas = createCanvas(600, 300);
         const context = canvas.getContext('2d');
         
-        // --- DIBUJAR FONDO ---
-        try {
-            const background = await loadImage(BACKGROUND_PATTERN_URL);
-            // Dibujar el fondo y ajustarlo al tamaño del canvas
-            context.drawImage(background, 0, 0, canvas.width, canvas.height); 
-
-        } catch (e) {
-            console.warn('Advertencia: No se pudo cargar la imagen de fondo. Usando color sólido MP_COLOR_HEX como respaldo.', e);
-            context.fillStyle = '#AAAAAA'; // Fondo de respaldo más claro para texto negro
-            context.fillRect(0, 0, 600, 300);
-        }
+        // 3. DIBUJAR FONDO (Degradado para estabilidad y legibilidad)
+        const gradient = context.createLinearGradient(0, 100, 0, 300);
+        gradient.addColorStop(0, LIGHT_MP_COLOR_HEX); // Azul más claro arriba
+        gradient.addColorStop(1, MP_COLOR_HEX); // Azul oscuro abajo
         
-        // 3. Dibujar Banner Superior Sólido
-        context.fillStyle = '#1e3c72'; 
+        context.fillStyle = gradient;
+        context.fillRect(0, 100, 600, 200); // Rellena el área principal (debajo del banner)
+
+        // 4. Dibujar Banner Superior (Color Sólido más Oscuro)
+        context.fillStyle = DARK_BANNER_COLOR_HEX; 
         context.fillRect(0, 0, 600, 100);
         
-        // 4. Dibujar Foto de Perfil (Avatar del Funcionario)
+        // 5. Dibujar Foto de Perfil (Avatar del Funcionario)
+        let avatarToDraw = null;
+        const avatarURL = funcionario.displayAvatarURL({ extension: 'png', size: 64 }); 
+        
         try {
-            // Se utiliza size 64 para una carga más rápida (aunque se dibuja a 76)
-            const avatar = await loadImage(funcionario.displayAvatarURL({ extension: 'png', size: 64 })); 
-            
+            avatarToDraw = await loadImage(avatarURL);
+        } catch (e) {
+            console.warn(`Error cargando avatar. Usando logo de respaldo.`);
+            try {
+                avatarToDraw = await loadImage(THUMBNAIL_URL);
+            } catch (error) {
+                 console.error("Error cargando el logo de respaldo. Dejando el área vacía.");
+            }
+        }
+        
+        // Dibujar el área del avatar si se pudo cargar algo
+        if (avatarToDraw) {
             // Dibujar el marco de la foto (círculo)
             context.beginPath();
             context.arc(70, 50, 40, 0, Math.PI * 2, true);
@@ -265,33 +277,31 @@ client.on('interactionCreate', async interaction => {
             context.arc(70, 50, 38, 0, Math.PI * 2, true);
             context.closePath();
             context.clip();
-            context.drawImage(avatar, 32, 12, 76, 76);
+            context.drawImage(avatarToDraw, 32, 12, 76, 76); 
             context.restore();
-
-        } catch (e) {
-            console.error('Error cargando avatar:', e);
         }
 
-        // 5. Escribir Título Principal (Verdana)
+
+        // 6. Escribir Título Principal (Verdana)
         context.font = 'bold 28px Verdana'; 
-        context.fillStyle = '#FFFFFF'; // Color BLANCO para el banner
+        context.fillStyle = TEXT_COLOR_BANNER; // BLANCO
         context.fillText('FISCALÍA GENERAL', 120, 45); 
 
-        // 6. Escribir Nombre de Usuario (Tag) (Verdana)
+        // 7. Escribir Nombre de Usuario (Tag) (Verdana)
         context.font = '22px Verdana'; 
-        context.fillStyle = '#FFFFFF'; // Color BLANCO para el banner
+        context.fillStyle = TEXT_COLOR_BANNER; // BLANCO
         context.fillText(`${funcionario.tag}`, 120, 80); 
 
-        // 7. Línea Separadora
-        context.strokeStyle = '#FFFFFF';
+        // 8. Línea Separadora 
+        context.strokeStyle = TEXT_COLOR_BANNER; // BLANCA
         context.lineWidth = 1;
         context.beginPath();
         context.moveTo(20, 110);
         context.lineTo(580, 110);
         context.stroke();
 
-        // 8. Escribir Datos del Funcionario (Títulos y Datos, tamaño 22px, Verdana)
-        context.fillStyle = TEXT_COLOR_DARK; // Color NEGRO para el texto de datos
+        // 9. Escribir Datos del Funcionario (NEGRO)
+        context.fillStyle = TEXT_COLOR_DARK; // NEGRO para contraste en el fondo claro
         
         // Cargo
         context.font = 'bold 22px Verdana'; 
@@ -311,13 +321,13 @@ client.on('interactionCreate', async interaction => {
         context.font = '22px Verdana'; 
         context.fillText(autoridad, 200, 230);
 
-        // 9. Footer (fecha)
+        // 10. Footer (fecha)
         context.font = '16px Verdana'; 
-        context.fillStyle = TEXT_COLOR_DARK; // También en NEGRO
+        context.fillStyle = TEXT_COLOR_DARK; // NEGRO
         context.fillText(`Emitida: ${new Date().toLocaleDateString('es-ES')}`, 400, 280);
 
 
-        // 10. Generar Buffer PNG
+        // 11. Generar Buffer PNG
         let buffer;
         try {
             buffer = canvas.toBuffer('image/png');
@@ -326,10 +336,10 @@ client.on('interactionCreate', async interaction => {
              return interaction.editReply({ content: '❌ Error crítico: Falló la generación del archivo PNG.', ephemeral: true });
         }
         
-        // 11. Crear el Attachment de Discord
+        // 12. Crear el Attachment de Discord
         const attachment = new AttachmentBuilder(buffer, { name: filename });
 
-        // 12. Crear el Embed (para acompañar la imagen)
+        // 13. Crear el Embed
         const fichaEmbed = new EmbedBuilder()
             .setColor(MP_COLOR)
             .setTitle(`✅ FICHA DE IDENTIFICACIÓN OFICIAL GENERADA`)
@@ -338,7 +348,7 @@ client.on('interactionCreate', async interaction => {
             .setFooter({ text: `Autoridad Certificadora: ${autoridad}` })
             .setTimestamp();
 
-        // 13. Enviar el Embed y el Attachment
+        // 14. Enviar el Embed y el Attachment
         await interaction.editReply({ embeds: [fichaEmbed], files: [attachment] });
     }
 });
