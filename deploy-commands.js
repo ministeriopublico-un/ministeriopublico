@@ -2,7 +2,7 @@ const { REST, Routes, ApplicationCommandOptionType } = require('discord.js');
 require('dotenv').config();
 
 const commands = [
-    // COMANDO 1: REGISTRO DE INVESTIGACIÓN (Existente)
+    // COMANDO 1: REGISTRO DE INVESTIGACIÓN
 	{
 		name: 'registro',
 		description: 'Registrar una investigación con datos completos',
@@ -67,7 +67,7 @@ const commands = [
 		]
 	},
 
-    // COMANDO 2: ACCIÓN DE PERSONAL Y DISCIPLINA (Existente)
+    // COMANDO 2: ACCIÓN DE PERSONAL Y DISCIPLINA
     {
         name: 'personal-accion',
         description: 'Genera un anuncio de Promoción, Degradación, Sanción o Remoción de un Fiscal',
@@ -92,7 +92,7 @@ const commands = [
         ],
     },
     
-    // COMANDO 3: GENERADOR DE EMBED UNIVERSAL (Nuevo)
+    // COMANDO 3: GENERADOR DE EMBED UNIVERSAL
     {
         name: 'anuncio',
         description: 'Genera un embed personalizado para anuncios o documentos generales.',
@@ -106,7 +106,7 @@ const commands = [
         ],
     },
 
-    // COMANDO 4: MODERACIÓN PERSONALIZADA (Nuevo)
+    // COMANDO 4: MODERACIÓN PERSONALIZADA
     {
         name: 'personal-moderacion',
         description: 'Comandos de moderación esenciales para el manejo del servidor.',
@@ -130,6 +130,28 @@ const commands = [
             { name: 'tiempo-segundos', type: ApplicationCommandOptionType.Integer, description: 'Duración del silencio (TIMEOUT). Mínimo 10s.', required: false },
             { name: 'cantidad-mensajes', type: ApplicationCommandOptionType.Integer, description: 'Número de mensajes a eliminar (CLEAR)', required: false },
             { name: 'rol', type: ApplicationCommandOptionType.Role, description: 'El rol a asignar/remover (ADD/REMOVE-ROLE)', required: false },
+        ],
+    },
+
+    // COMANDO 5: ANUNCIO OFICIAL
+    {
+        name: 'anuncio-oficial',
+        description: 'Envía un mensaje rápido, limpio y oficial en nombre de la Fiscalía.',
+        options: [
+            { name: 'mensaje', type: ApplicationCommandOptionType.String, description: 'El contenido principal del comunicado (máx 1024 caracteres).', required: true },
+            { name: 'titulo-corto', type: ApplicationCommandOptionType.String, description: 'Título del comunicado (Ej: CELERIDAD PROCESAL)', required: true },
+        ],
+    },
+
+    // COMANDO 6: FICHA OFICIAL DE PERSONAL
+    {
+        name: 'ficha-oficial',
+        description: 'Genera una ficha de identificación y registro de un funcionario o abogado.',
+        options: [
+            { name: 'funcionario', type: ApplicationCommandOptionType.User, description: 'El usuario del funcionario a quien se emite la ficha.', required: true },
+            { name: 'cargo-actual', type: ApplicationCommandOptionType.String, description: 'El cargo que ocupa actualmente (Ej: Fiscal Municipal).', required: true },
+            { name: 'registro-nacional', type: ApplicationCommandOptionType.String, description: 'Número de Registro o Cédula de Identidad (ON-ROL).', required: true },
+            { name: 'autoridad-emite', type: ApplicationCommandOptionType.String, description: 'Autoridad que certifica la ficha (Ej: Dir. RR.HH.).', required: true },
         ],
     },
 ];
