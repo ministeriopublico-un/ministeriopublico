@@ -20,7 +20,7 @@ client.on('interactionCreate', async interaction => {
 	if (interaction.commandName === 'registro') {
 		const embed = new EmbedBuilder()
 			.setColor(0x003366) 
-			.setTitle('📜 REGISTRO DE APERTURA DE INVESTIGACIÓN FORMAL')
+			.setTitle(' REGISTRO DE APERTURA DE INVESTIGACIÓN FORMAL')
 			.setDescription(
 				"El proceso judicial requiere la observancia rigurosa del **debido proceso** y de la garantía de la **celeridad y buena marcha de la administración de justicia**."
 			)
@@ -81,22 +81,22 @@ client.on('interactionCreate', async interaction => {
         const firmante = opts.getString('autoridad-firmante');
         
         let color = 0x00FF00; // Verde para Promoción
-        let titulo = '🟢 ORDEN DE PROMOCIÓN DE PERSONAL';
+        let titulo = ' ORDEN DE PROMOCIÓN DE PERSONAL';
         
         if (tipoAccion === 'DEGRADACION') {
             color = 0xFFA500; // Naranja
-            titulo = '🟠 ORDEN DE DEGRADACIÓN DE PERSONAL';
+            titulo = ' ORDEN DE DEGRADACIÓN DE PERSONAL';
         } else if (tipoAccion === 'SANCION') {
             color = 0xFF4500; // Rojo-Naranja
-            titulo = '🔴 ORDEN DE MEDIDA DISCIPLINARIA (SANCIÓN)';
+            titulo = ' ORDEN DE MEDIDA DISCIPLINARIA (SANCIÓN)';
         } else if (tipoAccion === 'REMOCION') {
             color = 0xFF0000; // Rojo Fuerte
-            titulo = '⚫ ORDEN DE REMOCIÓN Y EXPULSIÓN';
+            titulo = ' ORDEN DE REMOCIÓN Y EXPULSIÓN';
         }
 
         const embedPersonal = new EmbedBuilder()
             .setColor(color)
-            .setTitle(`🛡️ ${titulo} - FISCALÍA GENERAL DE LA REPÚBLICA`)
+            .setTitle(` ${titulo} - FISCALÍA GENERAL DE LA REPÚBLICA`)
             .setDescription(`Se notifica el movimiento oficial de personal emitido por la máxima autoridad competente en la Dirección de Recursos Humanos.`)
             .setThumbnail(THUMBNAIL_URL)
             .addFields(
