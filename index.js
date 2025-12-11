@@ -2,8 +2,15 @@ const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, Applicatio
 require('dotenv').config();
 const { createCanvas, loadImage } = require('canvas');
 
+// --- CÓDIGO DE EXPRESS PARA MANTENER EL BOT ACTIVO ---
+const express = require('express');
+const app = express();
+
+app.get('/', (req, res) => res.send('Bot activo'));
+app.listen(3000, () => console.log('Servidor web activo en puerto 3000'));
+// --------------------------------------------------------
+
 // --- CONSTANTES GLOBALES DE IMAGEN Y COLOR ---
-// (URLs de imágenes fijas para los Embeds)
 const HEADER_IMAGE_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448518866035544273/ministerio_publico_venezuela.png?ex=693b8dd1&is=693a3c51&hm=e20e1ae17a49040fa39067e08869a769883acc67abd69dea54f97141547eec96&=&format=webp&quality=lossless&width=1172&height=313';
 const THUMBNAIL_URL = 'https://media.discordapp.net/attachments/1448017639371964587/1448517274800754728/MINISTERIO_PUBLICO_DE_VENEZUELA_LOGO.png?ex=693b8c56&is=693a3ad6&hm=83af40c13feafd3bc91a944be73cab55a235379089fd165743a596cc33dfeb4a&=&format=webp&quality=lossless&width=675&height=675';
 
@@ -13,8 +20,8 @@ const MP_COLOR_HEX = '#001F4E';
 const LIGHT_MP_COLOR_HEX = '#003366'; 
 const DARK_BANNER_COLOR_HEX = '#1e3c72'; 
 
-// Colores del Texto en la Ficha
-const TEXT_COLOR_DARK = '#FFFFFF'; 
+// Colores del Texto en la Ficha (Asegurando buen contraste para el canvas)
+const TEXT_COLOR_DARK = '#FFFFFF'; // Cambio a NEGRO para contraste en zona clara
 const TEXT_COLOR_BANNER = '#FFFFFF'; 
 
 // --- CONFIGURACIÓN DEL CLIENTE ---
@@ -239,11 +246,11 @@ client.on('interactionCreate', async interaction => {
         
         // 3. DIBUJAR FONDO (Degradado para estabilidad y legibilidad)
         const gradient = context.createLinearGradient(0, 100, 0, 300);
-        gradient.addColorStop(0, LIGHT_MP_COLOR_HEX); // Azul más claro arriba
-        gradient.addColorStop(1, MP_COLOR_HEX); // Azul oscuro abajo
+        gradient.addColorStop(0, LIGHT_MP_COLOR_HEX); 
+        gradient.addColorStop(1, MP_COLOR_HEX); 
         
         context.fillStyle = gradient;
-        context.fillRect(0, 100, 600, 200); // Rellena el área principal (debajo del banner)
+        context.fillRect(0, 100, 600, 200); 
 
         // 4. Dibujar Banner Superior (Color Sólido más Oscuro)
         context.fillStyle = DARK_BANNER_COLOR_HEX; 
@@ -286,7 +293,7 @@ client.on('interactionCreate', async interaction => {
         // 6. Escribir Título Principal (Verdana)
         context.font = 'bold 28px Verdana'; 
         context.fillStyle = TEXT_COLOR_BANNER; // BLANCO
-        context.fillText('FISCALÍA GENERAL', 120, 45); 
+        context.fillText('FISCALÍA GENERAL DE LA REPÚBLICA', 120, 45); 
 
         // 7. Escribir Nombre de Usuario (Tag) (Verdana)
         context.font = '22px Verdana'; 
@@ -302,7 +309,7 @@ client.on('interactionCreate', async interaction => {
         context.stroke();
 
         // 9. Escribir Datos del Funcionario (NEGRO)
-        context.fillStyle = TEXT_COLOR_DARK; // NEGRO para contraste en el fondo claro
+        context.fillStyle = TEXT_COLOR_DARK; 
         
         // Cargo
         context.font = 'bold 22px Verdana'; 
@@ -324,7 +331,7 @@ client.on('interactionCreate', async interaction => {
 
         // 10. Footer (fecha)
         context.font = '16px Verdana'; 
-        context.fillStyle = TEXT_COLOR_DARK; // NEGRO
+        context.fillStyle = TEXT_COLOR_DARK; 
         context.fillText(`Emitida: ${new Date().toLocaleDateString('es-ES')}`, 400, 280);
 
 
